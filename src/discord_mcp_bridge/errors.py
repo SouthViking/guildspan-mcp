@@ -5,5 +5,13 @@ class DiscordMcpBridgeError(Exception):
     """Base exception for Discord MCP Bridge."""
 
 
-class DiscordToolNotImplementedError(DiscordMcpBridgeError):
-    """Raised when a tool contract exists before its Discord API implementation."""
+class DiscordConfigurationError(DiscordMcpBridgeError):
+    """Raised when required local configuration is missing or invalid."""
+
+
+class DiscordPermissionError(DiscordMcpBridgeError):
+    """Raised when local policy blocks an attempted Discord action."""
+
+
+class DiscordApiError(DiscordMcpBridgeError):
+    """Raised when the Discord REST API returns an error."""

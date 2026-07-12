@@ -1,5 +1,7 @@
 """Configuration for Discord MCP Bridge."""
 
+from __future__ import annotations
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,14 +15,48 @@ class Settings(BaseSettings):
     )
 
     discord_bot_token: str | None = None
+    discord_default_guild_id: str | None = None
     discord_allowed_guilds: str | None = None
     discord_allowed_channels: str | None = None
     discord_actor_name: str | None = None
     discord_actor_discord_id: str | None = None
     discord_append_attribution: bool = True
 
+    @property
+    def default_guild_id(self) -> str | None:
+        """Return the normalized configured default guild ID."""
+
+        return _normalized_or_none(self.discord_default_guild_id)
+
+    @property
+    def allowed_guild_ids(self) -> set[str]:
+        """Return normalized configured guild IDs."""
+
+        return _parse_csv_ids(self.discord_allowed_guilds)
+
+    @property
+    def allowed_channel_ids(self) -> set[str]:
+        """Return normalized configured channel IDs."""
+
+        return _parse_csv_ids(self.discord_allowed_channels)
+
 
 def load_settings() -> Settings:
     """Load settings from environment variables and an optional local .env file."""
 
     return Settings()
+
+
+def _parse_csv_ids(raw_value: str | None) -> set[str]:
+    if raw_value is None:
+        return set()
+    return {part.strip() for part in raw_value.split(",") if part.strip()}
+
+
+def _normalized_or_none(raw_value: str | None) -> str | None:
+    if raw_value is None:
+        return None
+    normalized = raw_value.strip()
+    if not normalized:
+        return None
+    return normalized

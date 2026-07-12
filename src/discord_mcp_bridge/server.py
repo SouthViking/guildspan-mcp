@@ -2,6 +2,7 @@
 
 from fastmcp import FastMCP
 
+from discord_mcp_bridge.tools.channels import discord_list_channels
 from discord_mcp_bridge.tools.messages import discord_send_message
 
 
@@ -9,6 +10,7 @@ def create_server() -> FastMCP:
     """Create and configure the Discord MCP Bridge server."""
 
     mcp = FastMCP("Discord MCP Bridge")
+    mcp.tool(discord_list_channels)
     mcp.tool(discord_send_message)
     return mcp
 

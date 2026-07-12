@@ -50,6 +50,17 @@ class FakeDiscordClient:
     async def list_guild_channels(self, guild_id: str) -> list[DiscordChannel]:
         raise AssertionError("list_guild_channels should not be called by discord_send_message")
 
+    async def list_channel_messages(
+        self,
+        *,
+        channel_id: str,
+        limit: int,
+        before: str | None = None,
+        after: str | None = None,
+        around: str | None = None,
+    ) -> list[dict[str, object]]:
+        raise AssertionError("list_channel_messages should not be called by discord_send_message")
+
     async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
         self.sent_payloads.append((channel_id, content))
         return DiscordMessage(

@@ -8,7 +8,7 @@ If you are an AI coding agent and the user asks you to "connect", "configure", "
 
 - MCP server name: `discord-mcp-bridge`
 - Transport: local process over `stdio`
-- Primary tools today: `discord_list_channels`, `discord_send_message`
+- Primary tools today: `discord_list_channels`, `discord_read_messages`, `discord_send_message`
 
 ## Required Setup
 
@@ -111,7 +111,8 @@ Install this repository as a local MCP server named discord-mcp-bridge.
 Do not treat it as a marketplace plugin. Create a Python virtual environment,
 install the project in editable mode, register the MCP command in my client
 config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
-client and verify that discord_list_channels and discord_send_message appear.
+client and verify that discord_list_channels, discord_read_messages, and
+discord_send_message appear.
 ```
 
 ## Client Registration
@@ -188,9 +189,10 @@ On Windows, use `C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe` as 
 After registration, verify these things in order:
 
 1. The MCP client starts the server without process errors.
-2. The tools `discord_list_channels` and `discord_send_message` appear in the client's tool list.
+2. The tools `discord_list_channels`, `discord_read_messages`, and `discord_send_message` appear in the client's tool list.
 3. A channel listing succeeds against a known guild ID.
-4. A test message succeeds against a known channel ID.
+4. A message history read succeeds against a known channel ID.
+5. A test message succeeds against a known channel ID.
 
 ## Reloading After Changes
 

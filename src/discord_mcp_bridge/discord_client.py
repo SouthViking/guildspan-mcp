@@ -107,6 +107,46 @@ class DiscordClient:
             )
         return channels
 
+    async def list_channel_messages(
+        self,
+        *,
+        channel_id: str,
+        limit: int,
+        before: str | None = None,
+        after: str | None = None,
+        around: str | None = None,
+    ) -> list[dict[str, object]]:
+        """Fetch messages visible to the bot in a channel."""
+
+        params: dict[str, str | int] = {"limit": limit}
+        if before is not None:
+            params["before"] = before
+        if after is not None:
+            params["after"] = after
+        if around is not None:
+            params["around"] = around
+
+        response = await self._client.get(
+            f"/channels/{channel_id}/messages",
+            params=params,
+        )
+        if not response.is_success:
+            message = self._extract_error_message(response)
+            raise DiscordApiError(
+                f"Discord API request failed with status {response.status_code}: {message}"
+            )
+
+        payload = response.json()
+        if not isinstance(payload, list):
+            raise DiscordApiError("Discord response payload was not a JSON array.")
+
+        messages: list[dict[str, object]] = []
+        for item in payload:
+            if not isinstance(item, dict):
+                raise DiscordApiError("Discord message payload item was not a JSON object.")
+            messages.append(cast(dict[str, object], item))
+        return messages
+
     async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
         """Send a message to a Discord channel."""
 

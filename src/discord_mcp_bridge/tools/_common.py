@@ -18,6 +18,17 @@ class DiscordClientProtocol(Protocol):
     async def list_guild_channels(self, guild_id: str) -> list[DiscordChannel]:
         """List channels visible to the bot in a guild."""
 
+    async def list_channel_messages(
+        self,
+        *,
+        channel_id: str,
+        limit: int,
+        before: str | None = None,
+        after: str | None = None,
+        around: str | None = None,
+    ) -> list[dict[str, object]]:
+        """List messages visible to the bot in a channel."""
+
     async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
         """Send a message."""
 

@@ -2,7 +2,7 @@
 
 Discord MCP Bridge is a local MCP server that will expose Discord actions to AI coding clients such as Codex, Claude, and Cursor.
 
-This version supports listing Discord channels and sending messages through the official Discord REST API using a bot token.
+This version supports listing Discord channels, reading channel message history, and sending messages through the official Discord REST API using a bot token.
 
 It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
 
@@ -17,7 +17,8 @@ Install this repository as a local MCP server named discord-mcp-bridge.
 Do not treat it as a marketplace plugin. Create a Python virtual environment,
 install the project in editable mode, register the MCP command in my client
 config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
-client and verify that discord_list_channels and discord_send_message appear.
+client and verify that discord_list_channels, discord_read_messages, and
+discord_send_message appear.
 ```
 
 Expected sequence:
@@ -27,7 +28,7 @@ Expected sequence:
 3. Register the MCP server in the target client using the local executable from `.venv`.
 4. Provide `DISCORD_BOT_TOKEN` in the client's `env` block.
 5. Restart or reload the client.
-6. Verify that `discord_send_message` and `discord_list_channels` are visible as tools.
+6. Verify that `discord_list_channels`, `discord_read_messages`, and `discord_send_message` are visible as tools.
 
 For agent-oriented instructions, see [AGENTS.md](AGENTS.md).
 
@@ -35,6 +36,7 @@ For agent-oriented instructions, see [AGENTS.md](AGENTS.md).
 
 - FastMCP server entrypoint is present.
 - `discord_list_channels` is implemented.
+- `discord_read_messages` is implemented.
 - `discord_send_message` is implemented.
 - Local allowlists for channels and guilds are supported.
 - Optional actor attribution is supported.
@@ -106,6 +108,7 @@ Minimum Discord permissions for sending messages:
 
 - `View Channels`
 - `Send Messages`
+- `Read Message History` for reading messages
 
 Optional but recommended local policy controls:
 
@@ -279,6 +282,30 @@ Current behavior:
 - Returns a structured result with `status`, `guild_id`, `count`, and `channels`.
 - Respects `DISCORD_ALLOWED_GUILDS`.
 - Filters the returned list through `DISCORD_ALLOWED_CHANNELS` when that allowlist is configured.
+
+### `discord_read_messages`
+
+Inputs:
+
+- `channel_id`: Discord channel ID.
+- `limit`: maximum number of matching messages to return, from 1 to 500.
+- `before`: optional message ID upper bound.
+- `after`: optional message ID lower bound.
+- `around`: optional message ID to read around. Cannot be combined with `before` or `after`.
+- `scan_limit`: optional maximum number of raw messages to scan before filtering, from 1 to 1000.
+- `page_size`: optional Discord API page size, from 1 to 100.
+- Optional local filters: `author_id`, `author_is_bot`, `contains`, `case_sensitive`, `has_attachments`, `has_embeds`, `pinned`, `mentions_user_id`, and `message_type`.
+- Optional include flags: `include_content`, `include_attachments`, `include_embeds`, `include_reactions`, `include_mentions`, and `include_referenced_message`.
+- `oldest_first`: optionally return matched messages in chronological order instead of Discord's default newest-first order.
+
+Current behavior:
+
+- Reads messages visible to the configured bot in a channel.
+- Uses Discord's native message cursors where possible.
+- Supports local filtering after fetching messages from Discord.
+- Supports controlled pagination for ranges and selective filters.
+- Returns structured context including message IDs, author summaries, timestamps, content, attachments, embeds, reactions, mentions, references, and a `next_before` cursor for continuing from the last inspected message.
+- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
 
 ### `discord_send_message`
 

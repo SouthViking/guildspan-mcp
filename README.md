@@ -2,22 +2,34 @@
 
 Discord MCP Bridge is a local MCP server that will expose Discord actions to AI coding clients such as Codex, Claude, and Cursor.
 
-This version supports sending a message to a specific Discord channel through the official Discord REST API using a bot token.
+This version supports listing Discord channels and sending messages through the official Discord REST API using a bot token.
+
+It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
 
 ## AI Client Quickstart
 
 If you are connecting this repo from an AI editor or assistant, treat it as a **local MCP server project**.
 
-Use this sequence exactly:
+You can give an AI coding agent this prompt:
+
+```text
+Install this repository as a local MCP server named discord-mcp-bridge.
+Do not treat it as a marketplace plugin. Create a Python virtual environment,
+install the project in editable mode, register the MCP command in my client
+config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
+client and verify that discord_list_channels and discord_send_message appear.
+```
+
+Expected sequence:
 
 1. Create `.venv` in the repository root.
-2. Install the package in editable mode with `.[dev]`.
-3. Register the MCP server in the target client using the local executable in `.venv\Scripts\discord-mcp-bridge.exe`.
+2. Install the package in editable mode.
+3. Register the MCP server in the target client using the local executable from `.venv`.
 4. Provide `DISCORD_BOT_TOKEN` in the client's `env` block.
 5. Restart or reload the client.
 6. Verify that `discord_send_message` and `discord_list_channels` are visible as tools.
 
-For agent-oriented instructions, see [AGENTS.md](</C:/Users/SouthViking/Desktop/discord-mcp-bridge/AGENTS.md>).
+For agent-oriented instructions, see [AGENTS.md](AGENTS.md).
 
 ## Current Status
 
@@ -52,19 +64,38 @@ uv run pytest
 uv run mypy
 ```
 
-Without `uv`:
+Without `uv`, on macOS/Linux:
 
 ```bash
+python -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/python -m pytest
+.venv/bin/python -m mypy
+```
+
+Without `uv`, on Windows PowerShell:
+
+```powershell
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev]"
 .venv\Scripts\python -m pytest
 .venv\Scripts\python -m mypy
 ```
 
-The MCP command works best after the editable install because it exposes the console script:
+For a runtime-only install, `pip install -e .` is enough. Use `pip install -e ".[dev]"` when you also want tests and type checks.
 
-```bash
-.venv\Scripts\discord-mcp-bridge
+The MCP command works best after the editable install because it exposes the console script.
+
+macOS/Linux:
+
+```text
+.venv/bin/discord-mcp-bridge
+```
+
+Windows:
+
+```text
+.venv\Scripts\discord-mcp-bridge.exe
 ```
 
 ## Configuration
@@ -91,12 +122,35 @@ DISCORD_ACTOR_DISCORD_ID=
 DISCORD_APPEND_ATTRIBUTION=true
 ```
 
+Minimum configuration:
+
+```env
+DISCORD_BOT_TOKEN=your-bot-token
+```
+
+Recommended configuration:
+
+```env
+DISCORD_BOT_TOKEN=your-bot-token
+DISCORD_DEFAULT_GUILD_ID=your-server-id
+DISCORD_ALLOWED_CHANNELS=channel-id
+DISCORD_ACTOR_NAME=your-name
+DISCORD_APPEND_ATTRIBUTION=true
+```
+
 Behavior notes:
 
 - If `DISCORD_DEFAULT_GUILD_ID` is set, `discord_list_channels` can be called without passing a guild ID and will use that guild deterministically.
 - If `DISCORD_ALLOWED_CHANNELS` is set, the tool only sends to listed channel IDs.
 - If `DISCORD_ALLOWED_GUILDS` is set, the tool validates the target channel's guild before sending.
 - If `DISCORD_APPEND_ATTRIBUTION=true`, the tool appends actor attribution when `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID` is configured.
+
+Discord setup notes:
+
+- `DISCORD_BOT_TOKEN` comes from a Discord application bot in the Discord Developer Portal.
+- `DISCORD_DEFAULT_GUILD_ID` is the Discord server ID.
+- `DISCORD_ALLOWED_CHANNELS` is a comma-separated list of channel IDs.
+- The Discord bot must be invited to the server and needs at least `View Channels` and `Send Messages`.
 
 ## Installation Path
 
@@ -110,11 +164,28 @@ The most reliable local setup is:
 
 Using the console script is the cleanest option after installation:
 
+macOS/Linux:
+
+```text
+command: /path/to/repo/.venv/bin/discord-mcp-bridge
+```
+
+Windows:
+
 ```text
 command: C:\Users\<you>\path\to\discord-mcp-bridge\.venv\Scripts\discord-mcp-bridge.exe
 ```
 
 If a client prefers Python explicitly, this also works:
+
+macOS/Linux:
+
+```text
+command: /path/to/repo/.venv/bin/python
+args: ["-m", "discord_mcp_bridge.server"]
+```
+
+Windows:
 
 ```text
 command: C:\Users\<you>\path\to\discord-mcp-bridge\.venv\Scripts\python.exe
@@ -129,7 +200,7 @@ Add this to `~/.codex/config.toml` or your project `.codex/config.toml`:
 
 ```toml
 [mcp_servers.discord-mcp-bridge]
-command = "C:\\Users\\<you>\\Desktop\\discord-mcp-bridge\\.venv\\Scripts\\discord-mcp-bridge.exe"
+command = "/path/to/discord-mcp-bridge/.venv/bin/discord-mcp-bridge"
 
 [mcp_servers.discord-mcp-bridge.env]
 DISCORD_BOT_TOKEN = "your-bot-token"
@@ -139,6 +210,8 @@ DISCORD_ACTOR_NAME = "SouthViking"
 DISCORD_APPEND_ATTRIBUTION = "true"
 ```
 
+On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
+
 ## Cursor
 
 Add this to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
@@ -147,7 +220,7 @@ Add this to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
 {
   "mcpServers": {
     "discord-mcp-bridge": {
-      "command": "C:\\Users\\<you>\\Desktop\\discord-mcp-bridge\\.venv\\Scripts\\discord-mcp-bridge.exe",
+      "command": "/path/to/discord-mcp-bridge/.venv/bin/discord-mcp-bridge",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
@@ -160,6 +233,8 @@ Add this to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
   }
 }
 ```
+
+On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
 
 ## Claude Desktop
 
@@ -169,7 +244,7 @@ Add this to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "discord-mcp-bridge": {
-      "command": "C:\\Users\\<you>\\Desktop\\discord-mcp-bridge\\.venv\\Scripts\\discord-mcp-bridge.exe",
+      "command": "/path/to/discord-mcp-bridge/.venv/bin/discord-mcp-bridge",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
@@ -182,6 +257,12 @@ Add this to your `claude_desktop_config.json`:
   }
 }
 ```
+
+On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
+
+## Reloading After Changes
+
+MCP clients usually discover tools when they start the local server process. After installing, updating this repository, adding a new tool, or changing the command path, restart or reload the MCP client. Some clients may also require a new chat/session before the refreshed tool list is visible.
 
 ## Implemented Tool
 

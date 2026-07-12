@@ -12,13 +12,45 @@ If you are an AI coding agent and the user asks you to "connect", "configure", "
 
 ## Required Setup
 
-1. Create a local Python virtual environment in the repo root:
+1. Create a local Python virtual environment in the repo root.
+
+macOS/Linux:
+
+```bash
+python -m venv .venv
+```
+
+Windows PowerShell:
 
 ```powershell
 python -m venv .venv
 ```
 
-2. Install the project in editable mode:
+2. Install the project in editable mode.
+
+Runtime-only install:
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -m pip install -e .
+```
+
+Windows PowerShell:
+
+```powershell
+.venv\Scripts\python -m pip install -e .
+```
+
+Development install with tests and type checks:
+
+macOS/Linux:
+
+```bash
+.venv/bin/python -m pip install -e ".[dev]"
+```
+
+Windows PowerShell:
 
 ```powershell
 .venv\Scripts\python -m pip install -e ".[dev]"
@@ -44,14 +76,42 @@ DISCORD_APPEND_ATTRIBUTION=true
 
 Prefer the installed console script:
 
+macOS/Linux:
+
+```text
+/path/to/repo/.venv/bin/discord-mcp-bridge
+```
+
+Windows:
+
 ```text
 C:\path\to\repo\.venv\Scripts\discord-mcp-bridge.exe
 ```
 
 Fallback:
 
+macOS/Linux:
+
+```text
+/path/to/repo/.venv/bin/python -m discord_mcp_bridge.server
+```
+
+Windows:
+
 ```text
 C:\path\to\repo\.venv\Scripts\python.exe -m discord_mcp_bridge.server
+```
+
+## Prompt Users Can Give Their Agent
+
+If a user asks how to install this from another AI client, they can say:
+
+```text
+Install this repository as a local MCP server named discord-mcp-bridge.
+Do not treat it as a marketplace plugin. Create a Python virtual environment,
+install the project in editable mode, register the MCP command in my client
+config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
+client and verify that discord_list_channels and discord_send_message appear.
 ```
 
 ## Client Registration
@@ -62,13 +122,19 @@ Add to `~/.codex/config.toml` or project `.codex/config.toml`:
 
 ```toml
 [mcp_servers.discord-mcp-bridge]
-command = "C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe"
+command = "/path/to/repo/.venv/bin/discord-mcp-bridge"
 
 [mcp_servers.discord-mcp-bridge.env]
 DISCORD_BOT_TOKEN = "your-bot-token"
 DISCORD_ALLOWED_CHANNELS = "123456789012345678"
 DISCORD_ACTOR_NAME = "SouthViking"
 DISCORD_APPEND_ATTRIBUTION = "true"
+```
+
+On Windows, use:
+
+```toml
+command = "C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe"
 ```
 
 ### Cursor
@@ -79,7 +145,7 @@ Add to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
 {
   "mcpServers": {
     "discord-mcp-bridge": {
-      "command": "C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe",
+      "command": "/path/to/repo/.venv/bin/discord-mcp-bridge",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
@@ -91,6 +157,8 @@ Add to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
   }
 }
 ```
+
+On Windows, use `C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe` as the command.
 
 ### Claude Desktop
 
@@ -100,7 +168,7 @@ Add to `claude_desktop_config.json`:
 {
   "mcpServers": {
     "discord-mcp-bridge": {
-      "command": "C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe",
+      "command": "/path/to/repo/.venv/bin/discord-mcp-bridge",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
@@ -113,6 +181,8 @@ Add to `claude_desktop_config.json`:
 }
 ```
 
+On Windows, use `C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe` as the command.
+
 ## Verification
 
 After registration, verify these things in order:
@@ -121,6 +191,10 @@ After registration, verify these things in order:
 2. The tools `discord_list_channels` and `discord_send_message` appear in the client's tool list.
 3. A channel listing succeeds against a known guild ID.
 4. A test message succeeds against a known channel ID.
+
+## Reloading After Changes
+
+MCP clients usually discover tools when they start the local server process. After installation, updates, new tools, or config path changes, restart or reload the client. Some clients may also need a new chat/session before the refreshed tool list appears.
 
 ## Important Constraints
 

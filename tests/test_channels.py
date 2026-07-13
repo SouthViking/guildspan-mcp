@@ -3,9 +3,9 @@ from typing import Any, cast
 import pytest
 
 from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage
+from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage, DiscordThread
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
-from discord_mcp_bridge.tools.channels import _discord_list_channels
+from discord_mcp_bridge.tools.channels import _discord_get_channel, _discord_list_channels
 
 
 def make_settings(**kwargs: object) -> Settings:
@@ -61,6 +61,34 @@ class FakeDiscordClient:
 
     async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
         raise AssertionError("send_message should not be called by discord_list_channels")
+
+    async def edit_message(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        content: str,
+    ) -> DiscordMessage:
+        raise AssertionError("edit_message should not be called by discord_list_channels")
+
+    async def add_reaction(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        emoji: str,
+    ) -> None:
+        raise AssertionError("add_reaction should not be called by discord_list_channels")
+
+    async def create_thread(
+        self,
+        *,
+        channel_id: str,
+        name: str,
+        message_id: str | None = None,
+        auto_archive_duration: int = 1440,
+    ) -> DiscordThread:
+        raise AssertionError("create_thread should not be called by discord_list_channels")
 
     async def aclose(self) -> None:
         self.closed = True
@@ -189,6 +217,43 @@ async def test_discord_list_channels_blocks_non_allowed_guild() -> None:
             settings=make_settings(
                 discord_bot_token="token",
                 discord_allowed_guilds="guild-2",
+            ),
+            client=fake_client,
+        )
+
+
+@pytest.mark.asyncio
+async def test_discord_get_channel_returns_channel_metadata() -> None:
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_get_channel(
+        channel_id="channel-1",
+        settings=make_settings(discord_bot_token="token"),
+        client=fake_client,
+    )
+
+    assert result == {
+        "status": "ok",
+        "channel": {
+            "id": "channel-1",
+            "name": "general",
+            "guild_id": "guild-1",
+            "type": 0,
+            "position": 1,
+        },
+    }
+
+
+@pytest.mark.asyncio
+async def test_discord_get_channel_respects_allowed_channels() -> None:
+    fake_client = FakeDiscordClient()
+
+    with pytest.raises(DiscordPermissionError, match="not in DISCORD_ALLOWED_CHANNELS"):
+        await _discord_get_channel(
+            channel_id="channel-1",
+            settings=make_settings(
+                discord_bot_token="token",
+                discord_allowed_channels="channel-2",
             ),
             client=fake_client,
         )

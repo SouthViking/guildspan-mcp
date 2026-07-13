@@ -16,7 +16,13 @@ async def test_create_server_registers_discord_send_message_tool() -> None:
     tools = await server.list_tools()
 
     assert [tool.name for tool in tools] == [
+        "discord_health_check",
         "discord_list_channels",
+        "discord_get_channel",
         "discord_read_messages",
+        "discord_search_messages",
         "discord_send_message",
+        "discord_edit_own_message",
+        "discord_create_thread",
+        "discord_add_reaction",
     ]

@@ -3,11 +3,15 @@ from typing import Any, cast
 import pytest
 
 from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage
+from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage, DiscordThread
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
 from discord_mcp_bridge.tools import messages as messages_module
 from discord_mcp_bridge.tools import _common as common_module
-from discord_mcp_bridge.tools.messages import _discord_send_message, discord_send_message
+from discord_mcp_bridge.tools.messages import (
+    _discord_edit_own_message,
+    _discord_send_message,
+    discord_send_message,
+)
 
 
 def make_settings(**kwargs: object) -> Settings:
@@ -70,8 +74,57 @@ class FakeDiscordClient:
             author_username=self.message.author_username,
         )
 
+    async def edit_message(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        content: str,
+    ) -> DiscordMessage:
+        raise AssertionError("edit_message should not be called by discord_send_message")
+
+    async def add_reaction(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        emoji: str,
+    ) -> None:
+        raise AssertionError("add_reaction should not be called by discord_send_message")
+
+    async def create_thread(
+        self,
+        *,
+        channel_id: str,
+        name: str,
+        message_id: str | None = None,
+        auto_archive_duration: int = 1440,
+    ) -> DiscordThread:
+        raise AssertionError("create_thread should not be called by discord_send_message")
+
     async def aclose(self) -> None:
         self.closed = True
+
+
+class EditingDiscordClient(FakeDiscordClient):
+    def __init__(self) -> None:
+        super().__init__()
+        self.edited_payloads: list[tuple[str, str, str]] = []
+
+    async def edit_message(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        content: str,
+    ) -> DiscordMessage:
+        self.edited_payloads.append((channel_id, message_id, content))
+        return DiscordMessage(
+            id=message_id,
+            channel_id=channel_id,
+            content=content,
+            author_username="bridge-bot",
+        )
 
 
 @pytest.mark.asyncio
@@ -208,3 +261,31 @@ async def test_discord_send_message_closes_managed_client() -> None:
 
     assert result["status"] == "sent"
     assert RecordingDiscordClient.instances[0].closed is True
+
+
+@pytest.mark.asyncio
+async def test_discord_edit_own_message_applies_actor_attribution() -> None:
+    fake_client = EditingDiscordClient()
+
+    result = await _discord_edit_own_message(
+        channel_id="1234567890",
+        message_id="message-1",
+        content="updated",
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_actor_name="SouthViking",
+            discord_append_attribution=True,
+        ),
+        client=fake_client,
+    )
+
+    assert result == {
+        "status": "edited",
+        "message_id": "message-1",
+        "channel_id": "1234567890",
+        "content": "updated\n\n-# sent via MCP by SouthViking",
+        "author_username": "bridge-bot",
+    }
+    assert fake_client.edited_payloads == [
+        ("1234567890", "message-1", "updated\n\n-# sent via MCP by SouthViking")
+    ]

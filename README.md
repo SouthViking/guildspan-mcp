@@ -1,5 +1,7 @@
 # Discord MCP Bridge
 
+[![CI](https://github.com/SouthViking/discord-mcp-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/SouthViking/discord-mcp-bridge/actions/workflows/ci.yml)
+
 Discord MCP Bridge is a local MCP server that will expose Discord actions to AI coding clients such as Codex, Claude, and Cursor.
 
 This version supports Discord diagnostics, channel inspection, message reading and search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
@@ -32,6 +34,24 @@ Expected sequence:
 6. Verify that the implemented Discord tools are visible.
 
 For agent-oriented instructions, see [AGENTS.md](AGENTS.md).
+
+## Project Quality
+
+The repository is maintained with conventional commits, a changelog, strict type checks, and GitHub Actions CI.
+
+CI runs automatically on:
+
+- pull request open, reopen, update, and ready-for-review events
+- pushes to any branch, including branches that already have an open PR
+
+CI verifies:
+
+- package installation with development dependencies
+- `pytest`
+- `mypy`
+- Python package build artifacts
+
+The changelog lives in [CHANGELOG.md](CHANGELOG.md).
 
 ## Current Status
 
@@ -92,6 +112,13 @@ python -m venv .venv
 ```
 
 For a runtime-only install, `pip install -e .` is enough. Use `pip install -e ".[dev]"` when you also want tests and type checks.
+
+Before opening a pull request, run:
+
+```bash
+.venv/bin/python -m pytest
+.venv/bin/python -m mypy src tests
+```
 
 The MCP command works best after the editable install because it exposes the console script.
 

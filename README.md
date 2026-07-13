@@ -2,7 +2,7 @@
 
 Discord MCP Bridge is a local MCP server that will expose Discord actions to AI coding clients such as Codex, Claude, and Cursor.
 
-This version supports listing Discord channels, reading channel message history, and sending messages through the official Discord REST API using a bot token.
+This version supports Discord diagnostics, channel inspection, message reading and search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
 It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
 
@@ -17,8 +17,9 @@ Install this repository as a local MCP server named discord-mcp-bridge.
 Do not treat it as a marketplace plugin. Create a Python virtual environment,
 install the project in editable mode, register the MCP command in my client
 config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
-client and verify that discord_list_channels, discord_read_messages, and
-discord_send_message appear.
+client and verify that discord_health_check, discord_list_channels,
+discord_read_messages, discord_search_messages, discord_send_message,
+discord_create_thread, and discord_add_reaction appear.
 ```
 
 Expected sequence:
@@ -28,16 +29,22 @@ Expected sequence:
 3. Register the MCP server in the target client using the local executable from `.venv`.
 4. Provide `DISCORD_BOT_TOKEN` in the client's `env` block.
 5. Restart or reload the client.
-6. Verify that `discord_list_channels`, `discord_read_messages`, and `discord_send_message` are visible as tools.
+6. Verify that the implemented Discord tools are visible.
 
 For agent-oriented instructions, see [AGENTS.md](AGENTS.md).
 
 ## Current Status
 
 - FastMCP server entrypoint is present.
+- `discord_health_check` is implemented.
 - `discord_list_channels` is implemented.
+- `discord_get_channel` is implemented.
 - `discord_read_messages` is implemented.
+- `discord_search_messages` is implemented.
 - `discord_send_message` is implemented.
+- `discord_edit_own_message` is implemented.
+- `discord_create_thread` is implemented.
+- `discord_add_reaction` is implemented.
 - Local allowlists for channels and guilds are supported.
 - Optional actor attribution is supported.
 - Installation snippets are included for Codex, Claude, and Cursor.
@@ -104,11 +111,13 @@ Windows:
 
 You need a Discord bot token and a bot that has access to the target channel.
 
-Minimum Discord permissions for sending messages:
+Minimum Discord permissions:
 
 - `View Channels`
-- `Send Messages`
-- `Read Message History` for reading messages
+- `Read Message History` for reading messages and search
+- `Send Messages` for sending messages
+- `Create Public Threads` for creating public threads
+- `Add Reactions` for adding reactions
 
 Optional but recommended local policy controls:
 
@@ -143,17 +152,17 @@ DISCORD_APPEND_ATTRIBUTION=true
 
 Behavior notes:
 
-- If `DISCORD_DEFAULT_GUILD_ID` is set, `discord_list_channels` can be called without passing a guild ID and will use that guild deterministically.
-- If `DISCORD_ALLOWED_CHANNELS` is set, the tool only sends to listed channel IDs.
-- If `DISCORD_ALLOWED_GUILDS` is set, the tool validates the target channel's guild before sending.
-- If `DISCORD_APPEND_ATTRIBUTION=true`, the tool appends actor attribution when `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID` is configured.
+- If `DISCORD_DEFAULT_GUILD_ID` is set, tools that accept an optional guild ID can use that guild deterministically.
+- If `DISCORD_ALLOWED_CHANNELS` is set, channel-scoped tools only operate on listed channel IDs.
+- If `DISCORD_ALLOWED_GUILDS` is set, channel-scoped tools validate the target channel's guild before acting.
+- If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools append actor attribution when `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID` is configured.
 
 Discord setup notes:
 
 - `DISCORD_BOT_TOKEN` comes from a Discord application bot in the Discord Developer Portal.
 - `DISCORD_DEFAULT_GUILD_ID` is the Discord server ID.
 - `DISCORD_ALLOWED_CHANNELS` is a comma-separated list of channel IDs.
-- The Discord bot must be invited to the server and needs at least `View Channels` and `Send Messages`.
+- The Discord bot must be invited to the server and needs the permissions for the tools you intend to use.
 
 ## Installation Path
 
@@ -267,7 +276,21 @@ On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
 
 MCP clients usually discover tools when they start the local server process. After installing, updating this repository, adding a new tool, or changing the command path, restart or reload the MCP client. Some clients may also require a new chat/session before the refreshed tool list is visible.
 
-## Implemented Tool
+## Implemented Tools
+
+### `discord_health_check`
+
+Inputs:
+
+- `guild_id`: optional Discord guild/server ID.
+- `channel_id`: optional Discord channel ID.
+- `include_channel_sample`: whether to verify guild channel listing, default `true`.
+
+Current behavior:
+
+- Checks local config, token presence, guild policy, optional guild access, and optional channel access.
+- Returns `status`, `guild_id`, `channel_id`, and `checks`.
+- Reports degraded checks in-band instead of failing on the first diagnostic problem.
 
 ### `discord_list_channels`
 
@@ -282,6 +305,17 @@ Current behavior:
 - Returns a structured result with `status`, `guild_id`, `count`, and `channels`.
 - Respects `DISCORD_ALLOWED_GUILDS`.
 - Filters the returned list through `DISCORD_ALLOWED_CHANNELS` when that allowlist is configured.
+
+### `discord_get_channel`
+
+Inputs:
+
+- `channel_id`: Discord channel ID.
+
+Current behavior:
+
+- Returns channel metadata with `id`, `name`, `guild_id`, `type`, and `position`.
+- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
 
 ### `discord_read_messages`
 
@@ -307,6 +341,25 @@ Current behavior:
 - Returns structured context including message IDs, author summaries, timestamps, content, attachments, embeds, reactions, mentions, references, and a `next_before` cursor for continuing from the last inspected message.
 - Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
 
+### `discord_search_messages`
+
+Inputs:
+
+- `contains`: required text query.
+- `channel_ids`: optional list of channel IDs.
+- `guild_id`: optional guild/server ID used when `channel_ids` is omitted.
+- `limit`: maximum matches to return, from 1 to 100.
+- `scan_limit_per_channel`: maximum raw messages to scan per channel, from 1 to 1000.
+- Optional filters: `case_sensitive`, `author_id`, and `has_attachments`.
+- `oldest_first`: optionally return matches in chronological order.
+
+Current behavior:
+
+- Searches recent visible messages by scanning channel history locally.
+- When `channel_ids` is omitted, searches visible channels in the requested or default guild after allowlist filtering.
+- Returns `status`, `query`, `count`, `channels_searched`, `scanned_channels`, and `messages`.
+- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+
 ### `discord_send_message`
 
 Inputs:
@@ -320,8 +373,53 @@ Current behavior:
 - Returns a structured result with `status`, `message_id`, `channel_id`, `content`, and `author_username`.
 - Rejects missing config and blocked channels/guilds before sending.
 
+### `discord_edit_own_message`
+
+Inputs:
+
+- `channel_id`: Discord channel ID.
+- `message_id`: Discord message ID.
+- `content`: replacement message content.
+
+Current behavior:
+
+- Edits a message through Discord's bot-token API.
+- Applies the same optional actor attribution as `discord_send_message`.
+- Returns `status`, `message_id`, `channel_id`, `content`, and `author_username`.
+- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+
+### `discord_create_thread`
+
+Inputs:
+
+- `channel_id`: Discord channel ID.
+- `name`: thread name.
+- `message_id`: optional message ID for creating a thread from a message.
+- `auto_archive_duration`: auto-archive duration in minutes, from 60 to 10080, default `1440`.
+
+Current behavior:
+
+- Creates a public thread in a channel, or starts a thread from an existing message.
+- Returns `status`, `thread_id`, `channel_id`, `name`, `parent_channel_id`, `guild_id`, and `type`.
+- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+
+### `discord_add_reaction`
+
+Inputs:
+
+- `channel_id`: Discord channel ID.
+- `message_id`: Discord message ID.
+- `emoji`: unicode emoji or Discord custom emoji string.
+
+Current behavior:
+
+- Adds a reaction to a message as the configured bot.
+- URL-encodes the emoji for Discord's reaction endpoint.
+- Returns `status`, `channel_id`, `message_id`, and `emoji`.
+- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+
 ## Future Tools
 
-- `discord_read_messages`
-- `discord_add_reaction`
-- `discord_create_thread`
+- `discord_delete_own_message`
+- `discord_list_thread_members`
+- `discord_archive_thread`

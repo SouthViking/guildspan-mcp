@@ -7,6 +7,8 @@ from discord_mcp_bridge.tools._common import (
     DiscordClientProtocol,
     assert_channel_is_allowed,
     build_client,
+    required_id,
+    required_text,
     require_bot_token,
     resolve_settings,
 )
@@ -18,6 +20,20 @@ async def discord_send_message(channel_id: str, content: str) -> dict[str, str]:
     return await _discord_send_message(channel_id=channel_id, content=content)
 
 
+async def discord_edit_own_message(
+    channel_id: str,
+    message_id: str,
+    content: str,
+) -> dict[str, str]:
+    """Edit a Discord message previously sent by the configured bot."""
+
+    return await _discord_edit_own_message(
+        channel_id=channel_id,
+        message_id=message_id,
+        content=content,
+    )
+
+
 async def _discord_send_message(
     *,
     channel_id: str,
@@ -25,14 +41,8 @@ async def _discord_send_message(
     settings: Settings | None = None,
     client: DiscordClientProtocol | None = None,
 ) -> dict[str, str]:
-    normalized_channel_id = channel_id.strip()
-    normalized_content = content.strip()
-
-    if not normalized_channel_id:
-        raise ValueError("channel_id is required")
-
-    if not normalized_content:
-        raise ValueError("content is required")
+    normalized_channel_id = required_id(channel_id, "channel_id")
+    normalized_content = required_text(content, "content")
 
     resolved_settings = resolve_settings(settings)
     bot_token = require_bot_token(resolved_settings)
@@ -60,6 +70,52 @@ async def _discord_send_message(
 
     return {
         "status": "sent",
+        "message_id": message.id,
+        "channel_id": message.channel_id,
+        "content": message.content,
+        "author_username": message.author_username,
+    }
+
+
+async def _discord_edit_own_message(
+    *,
+    channel_id: str,
+    message_id: str,
+    content: str,
+    settings: Settings | None = None,
+    client: DiscordClientProtocol | None = None,
+) -> dict[str, str]:
+    normalized_channel_id = required_id(channel_id, "channel_id")
+    normalized_message_id = required_id(message_id, "message_id")
+    normalized_content = required_text(content, "content")
+
+    resolved_settings = resolve_settings(settings)
+    bot_token = require_bot_token(resolved_settings)
+
+    managed_client = client is None
+    discord_client = client or build_client(bot_token=bot_token)
+
+    try:
+        await assert_channel_is_allowed(
+            channel_id=normalized_channel_id,
+            settings=resolved_settings,
+            client=discord_client,
+        )
+        final_content = _format_message_content(
+            content=normalized_content,
+            settings=resolved_settings,
+        )
+        message = await discord_client.edit_message(
+            channel_id=normalized_channel_id,
+            message_id=normalized_message_id,
+            content=final_content,
+        )
+    finally:
+        if managed_client:
+            await discord_client.aclose()
+
+    return {
+        "status": "edited",
         "message_id": message.id,
         "channel_id": message.channel_id,
         "content": message.content,

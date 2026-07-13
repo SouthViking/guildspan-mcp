@@ -5,7 +5,12 @@ from __future__ import annotations
 from typing import Protocol
 
 from discord_mcp_bridge.config import Settings, load_settings
-from discord_mcp_bridge.discord_client import DiscordChannel, DiscordClient, DiscordMessage
+from discord_mcp_bridge.discord_client import (
+    DiscordChannel,
+    DiscordClient,
+    DiscordMessage,
+    DiscordThread,
+)
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
 
 
@@ -31,6 +36,34 @@ class DiscordClientProtocol(Protocol):
 
     async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
         """Send a message."""
+
+    async def edit_message(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        content: str,
+    ) -> DiscordMessage:
+        """Edit a message."""
+
+    async def add_reaction(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        emoji: str,
+    ) -> None:
+        """Add a reaction."""
+
+    async def create_thread(
+        self,
+        *,
+        channel_id: str,
+        name: str,
+        message_id: str | None = None,
+        auto_archive_duration: int = 1440,
+    ) -> DiscordThread:
+        """Create a thread."""
 
     async def aclose(self) -> None:
         """Close network resources."""
@@ -108,3 +141,40 @@ def filter_allowed_channels(
     if not allowed_channels:
         return channels
     return [channel for channel in channels if channel.id in allowed_channels]
+
+
+def required_id(value: str, name: str) -> str:
+    """Normalize a required Discord snowflake-like identifier."""
+
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{name} is required")
+    return normalized
+
+
+def optional_id(value: str | None) -> str | None:
+    """Normalize an optional Discord snowflake-like identifier."""
+
+    if value is None:
+        return None
+    normalized = value.strip()
+    if not normalized:
+        return None
+    return normalized
+
+
+def required_text(value: str, name: str) -> str:
+    """Normalize required user-facing text."""
+
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{name} is required")
+    return normalized
+
+
+def bounded_int(*, value: int, name: str, minimum: int, maximum: int) -> int:
+    """Validate an integer against inclusive bounds."""
+
+    if value < minimum or value > maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}")
+    return value

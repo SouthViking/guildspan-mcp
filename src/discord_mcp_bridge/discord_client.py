@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import cast
+from urllib.parse import quote
 
 import httpx
 
@@ -20,6 +21,17 @@ class DiscordMessage:
     channel_id: str
     content: str
     author_username: str
+
+
+@dataclass(frozen=True)
+class DiscordThread:
+    """Normalized subset of a Discord thread channel response."""
+
+    id: str
+    name: str | None
+    parent_id: str | None
+    guild_id: str | None
+    type: int | None
 
 
 @dataclass(frozen=True)
@@ -154,6 +166,91 @@ class DiscordClient:
             f"/channels/{channel_id}/messages",
             json={"content": content},
         )
+        data = self._decode_response(response)
+        author_object = data.get("author", {})
+        if not isinstance(author_object, dict):
+            raise DiscordApiError("Discord response did not include a valid author object.")
+        author = cast(dict[str, object], author_object)
+        author_username = author.get("username")
+        if not isinstance(author_username, str):
+            raise DiscordApiError("Discord response did not include a valid author username.")
+
+        return DiscordMessage(
+            id=str(data["id"]),
+            channel_id=str(data["channel_id"]),
+            content=str(data["content"]),
+            author_username=author_username,
+        )
+
+    async def edit_message(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        content: str,
+    ) -> DiscordMessage:
+        """Edit a message sent by the bot."""
+
+        response = await self._client.patch(
+            f"/channels/{channel_id}/messages/{message_id}",
+            json={"content": content},
+        )
+        return self._decode_message_response(response)
+
+    async def add_reaction(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+        emoji: str,
+    ) -> None:
+        """Add a reaction to a message as the bot."""
+
+        encoded_emoji = quote(emoji, safe="")
+        response = await self._client.put(
+            f"/channels/{channel_id}/messages/{message_id}/reactions/{encoded_emoji}/@me"
+        )
+        if not response.is_success:
+            message = self._extract_error_message(response)
+            raise DiscordApiError(
+                f"Discord API request failed with status {response.status_code}: {message}"
+            )
+
+    async def create_thread(
+        self,
+        *,
+        channel_id: str,
+        name: str,
+        message_id: str | None = None,
+        auto_archive_duration: int = 1440,
+    ) -> DiscordThread:
+        """Create a public thread in a channel or from an existing message."""
+
+        payload: dict[str, str | int] = {
+            "name": name,
+            "auto_archive_duration": auto_archive_duration,
+        }
+        if message_id is None:
+            payload["type"] = 11
+            response = await self._client.post(
+                f"/channels/{channel_id}/threads",
+                json=payload,
+            )
+        else:
+            response = await self._client.post(
+                f"/channels/{channel_id}/messages/{message_id}/threads",
+                json=payload,
+            )
+        data = self._decode_response(response)
+        return DiscordThread(
+            id=str(data["id"]),
+            name=self._as_optional_str(data.get("name")),
+            parent_id=self._as_optional_str(data.get("parent_id")),
+            guild_id=self._as_optional_str(data.get("guild_id")),
+            type=self._as_optional_int(data.get("type")),
+        )
+
+    def _decode_message_response(self, response: httpx.Response) -> DiscordMessage:
         data = self._decode_response(response)
         author_object = data.get("author", {})
         if not isinstance(author_object, dict):

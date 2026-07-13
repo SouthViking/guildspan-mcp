@@ -6,8 +6,10 @@ from discord_mcp_bridge.config import Settings
 from discord_mcp_bridge.tools._common import (
     DiscordClientProtocol,
     assert_guild_is_allowed,
+    assert_channel_is_allowed,
     build_client,
     filter_allowed_channels,
+    required_id,
     require_bot_token,
     resolve_settings,
 )
@@ -17,6 +19,48 @@ async def discord_list_channels(guild_id: str | None = None) -> dict[str, object
     """List channels visible to the configured bot in a Discord guild."""
 
     return await _discord_list_channels(guild_id=guild_id)
+
+
+async def discord_get_channel(channel_id: str) -> dict[str, object]:
+    """Get metadata for a Discord channel visible to the configured bot."""
+
+    return await _discord_get_channel(channel_id=channel_id)
+
+
+async def _discord_get_channel(
+    *,
+    channel_id: str,
+    settings: Settings | None = None,
+    client: DiscordClientProtocol | None = None,
+) -> dict[str, object]:
+    normalized_channel_id = required_id(channel_id, "channel_id")
+    resolved_settings = resolve_settings(settings)
+    bot_token = require_bot_token(resolved_settings)
+
+    managed_client = client is None
+    discord_client = client or build_client(bot_token=bot_token)
+
+    try:
+        await assert_channel_is_allowed(
+            channel_id=normalized_channel_id,
+            settings=resolved_settings,
+            client=discord_client,
+        )
+        channel = await discord_client.get_channel(normalized_channel_id)
+    finally:
+        if managed_client:
+            await discord_client.aclose()
+
+    return {
+        "status": "ok",
+        "channel": {
+            "id": channel.id,
+            "name": channel.name,
+            "guild_id": channel.guild_id,
+            "type": channel.type,
+            "position": channel.position,
+        },
+    }
 
 
 async def _discord_list_channels(

@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/SouthViking/discord-mcp-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/SouthViking/discord-mcp-bridge/actions/workflows/ci.yml)
 
-Discord MCP Bridge is a local MCP server that will expose Discord actions to AI coding clients such as Codex, Claude, and Cursor.
+Discord MCP Bridge is a local MCP server that exposes Discord bot actions to AI coding clients such as Codex, Claude, Cursor, and other MCP-capable tools.
 
-This version supports Discord diagnostics, channel inspection, message reading and search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
+It supports Discord diagnostics, channel inspection, message reading and search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
 It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
 
@@ -52,6 +52,8 @@ CI verifies:
 - Python package build artifacts
 
 The changelog lives in [CHANGELOG.md](CHANGELOG.md).
+Security guidance lives in [SECURITY.md](SECURITY.md).
+Contribution notes live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Current Status
 
@@ -187,6 +189,7 @@ Behavior notes:
 Discord setup notes:
 
 - `DISCORD_BOT_TOKEN` comes from a Discord application bot in the Discord Developer Portal.
+- Use a Discord bot token only. Do not use user tokens.
 - `DISCORD_DEFAULT_GUILD_ID` is the Discord server ID.
 - `DISCORD_ALLOWED_CHANNELS` is a comma-separated list of channel IDs.
 - The Discord bot must be invited to the server and needs the permissions for the tools you intend to use.

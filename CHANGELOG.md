@@ -11,6 +11,7 @@ style sections and uses conventional commits for commit messages.
 
 - GitHub Actions CI for pull requests and branch pushes.
 - Package build verification in CI.
+- Public-readiness project metadata, contribution notes, and security guidance.
 
 ## [0.1.0] - 2026-07-13
 

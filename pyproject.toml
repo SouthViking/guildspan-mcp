@@ -10,11 +10,30 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "SouthViking" }]
+keywords = ["mcp", "discord", "discord-bot", "fastmcp", "codex", "claude", "cursor"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Framework :: AsyncIO",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Communications :: Chat",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
   "fastmcp>=2.0.0",
   "httpx>=0.28.0",
   "pydantic-settings>=2.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/SouthViking/discord-mcp-bridge"
+Repository = "https://github.com/SouthViking/discord-mcp-bridge"
+Issues = "https://github.com/SouthViking/discord-mcp-bridge/issues"
+Changelog = "https://github.com/SouthViking/discord-mcp-bridge/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [

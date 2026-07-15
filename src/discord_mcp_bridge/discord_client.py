@@ -119,6 +119,50 @@ class DiscordClient:
             )
         return channels
 
+    async def get_current_user(self) -> dict[str, object]:
+        """Fetch the user object for the configured bot token."""
+
+        response = await self._client.get("/users/@me")
+        return self._decode_response(response)
+
+    async def get_user(self, user_id: str) -> dict[str, object]:
+        """Fetch a Discord user by ID."""
+
+        response = await self._client.get(f"/users/{user_id}")
+        return self._decode_response(response)
+
+    async def get_guild_member(
+        self,
+        *,
+        guild_id: str,
+        user_id: str,
+    ) -> dict[str, object]:
+        """Fetch one member from a guild."""
+
+        response = await self._client.get(f"/guilds/{guild_id}/members/{user_id}")
+        return self._decode_response(response)
+
+    async def search_guild_members(
+        self,
+        *,
+        guild_id: str,
+        query: str,
+        limit: int,
+    ) -> list[dict[str, object]]:
+        """Search guild members by username or nickname prefix."""
+
+        response = await self._client.get(
+            f"/guilds/{guild_id}/members/search",
+            params={"query": query, "limit": limit},
+        )
+        return self._decode_object_list_response(response, resource_name="member")
+
+    async def list_guild_roles(self, guild_id: str) -> list[dict[str, object]]:
+        """Fetch the roles configured in a guild."""
+
+        response = await self._client.get(f"/guilds/{guild_id}/roles")
+        return self._decode_object_list_response(response, resource_name="role")
+
     async def list_channel_messages(
         self,
         *,
@@ -278,6 +322,31 @@ class DiscordClient:
         raise DiscordApiError(
             f"Discord API request failed with status {response.status_code}: {message}"
         )
+
+    def _decode_object_list_response(
+        self,
+        response: httpx.Response,
+        *,
+        resource_name: str,
+    ) -> list[dict[str, object]]:
+        if not response.is_success:
+            message = self._extract_error_message(response)
+            raise DiscordApiError(
+                f"Discord API request failed with status {response.status_code}: {message}"
+            )
+
+        payload = response.json()
+        if not isinstance(payload, list):
+            raise DiscordApiError("Discord response payload was not a JSON array.")
+
+        items: list[dict[str, object]] = []
+        for item in payload:
+            if not isinstance(item, dict):
+                raise DiscordApiError(
+                    f"Discord {resource_name} payload item was not a JSON object."
+                )
+            items.append(cast(dict[str, object], item))
+        return items
 
     def _extract_error_message(self, response: httpx.Response) -> str:
         try:

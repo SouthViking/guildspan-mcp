@@ -4,7 +4,7 @@
 
 Discord MCP Bridge is a local MCP server that exposes Discord bot actions to AI coding clients such as Codex, Claude, Cursor, and other MCP-capable tools.
 
-It supports Discord diagnostics, channel inspection, message reading and search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
+It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, message reading and search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
 It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
 
@@ -20,6 +20,8 @@ Do not treat it as a marketplace plugin. Create a Python virtual environment,
 install the project in editable mode, register the MCP command in my client
 config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
 client and verify that discord_health_check, discord_list_channels,
+discord_get_current_bot_user, discord_get_user, discord_get_member,
+discord_search_members, discord_list_roles,
 discord_read_messages, discord_search_messages, discord_send_message,
 discord_create_thread, and discord_add_reaction appear.
 ```
@@ -61,6 +63,11 @@ Contribution notes live in [CONTRIBUTING.md](CONTRIBUTING.md).
 - `discord_health_check` is implemented.
 - `discord_list_channels` is implemented.
 - `discord_get_channel` is implemented.
+- `discord_get_current_bot_user` is implemented.
+- `discord_get_user` is implemented.
+- `discord_get_member` is implemented with optional role resolution.
+- `discord_search_members` is implemented with optional role resolution.
+- `discord_list_roles` is implemented.
 - `discord_read_messages` is implemented.
 - `discord_search_messages` is implemented.
 - `discord_send_message` is implemented.
@@ -147,6 +154,8 @@ Minimum Discord permissions:
 - `Send Messages` for sending messages
 - `Create Public Threads` for creating public threads
 - `Add Reactions` for adding reactions
+
+The read-only user, individual member, member search, and role-listing tools do not require adding moderation permissions to the bot role. Bulk member listing is intentionally not exposed because Discord requires the privileged `GUILD_MEMBERS` intent for that endpoint.
 
 Optional but recommended local policy controls:
 
@@ -346,6 +355,72 @@ Current behavior:
 
 - Returns channel metadata with `id`, `name`, `guild_id`, `type`, and `position`.
 - Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+
+### `discord_get_current_bot_user`
+
+Inputs: none.
+
+Current behavior:
+
+- Returns the public Discord identity represented by the configured bot token.
+- Includes `id`, `username`, `global_name`, `display_name`, avatar metadata, bot/system markers, and public flags.
+- Does not require additional guild permissions.
+
+### `discord_get_user`
+
+Inputs:
+
+- `user_id`: Discord user ID.
+
+Current behavior:
+
+- Returns public profile fields for the requested Discord user.
+- Normalizes `display_name` to the global display name when present, otherwise the username.
+- Does not modify the user or require moderation permissions.
+
+### `discord_get_member`
+
+Inputs:
+
+- `user_id`: Discord user ID.
+- `guild_id`: optional guild/server ID.
+- `resolve_roles`: whether to resolve role IDs to role metadata, default `true`.
+
+Current behavior:
+
+- Returns the user's guild-specific member record, including nickname, display name, join timestamp, role IDs, onboarding state, timeout timestamp, voice flags, and public user profile.
+- Uses `DISCORD_DEFAULT_GUILD_ID` when `guild_id` is omitted.
+- Resolves member roles to names and metadata when `resolve_roles` is enabled.
+- Respects `DISCORD_ALLOWED_GUILDS` and does not require moderation permissions.
+
+### `discord_search_members`
+
+Inputs:
+
+- `query`: username or guild nickname prefix.
+- `guild_id`: optional guild/server ID.
+- `limit`: maximum number of members to return, from 1 to 100, default `25`.
+- `resolve_roles`: whether to resolve role IDs to role metadata, default `true`.
+
+Current behavior:
+
+- Searches guild members through Discord's member search endpoint.
+- Uses `DISCORD_DEFAULT_GUILD_ID` when `guild_id` is omitted.
+- Returns `status`, `guild_id`, `query`, `count`, and normalized `members`.
+- Respects `DISCORD_ALLOWED_GUILDS`; bulk member listing through the privileged `GUILD_MEMBERS` intent is intentionally not exposed.
+
+### `discord_list_roles`
+
+Inputs:
+
+- `guild_id`: optional guild/server ID.
+
+Current behavior:
+
+- Lists guild roles from highest to lowest position.
+- Returns role IDs, names, descriptions, colors, positions, permission bitfields, display settings, and role flags.
+- Uses `DISCORD_DEFAULT_GUILD_ID` when `guild_id` is omitted.
+- Respects `DISCORD_ALLOWED_GUILDS` and does not modify roles.
 
 ### `discord_read_messages`
 

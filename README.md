@@ -44,7 +44,7 @@ The repository is maintained with conventional commits, a changelog, strict type
 CI runs automatically on:
 
 - pull request open, reopen, update, and ready-for-review events
-- pushes to any branch, including branches that already have an open PR
+- pushes to `main`
 
 CI verifies:
 

@@ -8,7 +8,7 @@ If you are an AI coding agent and the user asks you to "connect", "configure", "
 
 - MCP server name: `discord-mcp-bridge`
 - Transport: local process over `stdio`
-- Primary tools today: `discord_health_check`, `discord_list_channels`, `discord_get_channel`, `discord_read_messages`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
+- Primary tools today: `discord_health_check`, `discord_list_channels`, `discord_get_channel`, `discord_get_current_bot_user`, `discord_get_user`, `discord_get_member`, `discord_search_members`, `discord_list_roles`, `discord_read_messages`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
 
 ## Required Setup
 
@@ -190,8 +190,9 @@ After registration, verify these things in order:
 1. The MCP client starts the server without process errors.
 2. The Discord MCP tools appear in the client's tool list.
 3. A channel listing succeeds against a known guild ID.
-4. A message history read succeeds against a known channel ID.
-5. A test message succeeds against a known channel ID.
+4. An individual member lookup succeeds against a known user ID.
+5. A message history read succeeds against a known channel ID.
+6. A test message succeeds against a known channel ID.
 
 ## Reloading After Changes
 

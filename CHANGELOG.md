@@ -9,7 +9,9 @@ style sections and uses conventional commits for commit messages.
 
 ### Added
 
-- GitHub Actions CI for pull requests and branch pushes.
+- Read-only tools for bot identity, user lookup, guild member lookup and search, and guild role listing.
+- Optional role-name resolution for member lookup and search without adding moderation permissions.
+- GitHub Actions CI for pull requests and pushes to `main`.
 - Package build verification in CI.
 - Public-readiness project metadata, contribution notes, and security guidance.
 

@@ -25,6 +25,7 @@ async def test_create_server_registers_discord_send_message_tool() -> None:
         "discord_search_members",
         "discord_list_roles",
         "discord_read_messages",
+        "discord_download_attachment",
         "discord_search_messages",
         "discord_send_message",
         "discord_edit_own_message",

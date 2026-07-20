@@ -14,11 +14,15 @@ from discord_mcp_bridge.discord_client import (
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
 
 
-class DiscordClientProtocol(Protocol):
-    """Protocol for Discord client interactions used by tools and tests."""
+class ChannelAccessClientProtocol(Protocol):
+    """Protocol for validating access to one Discord channel."""
 
     async def get_channel(self, channel_id: str) -> DiscordChannel:
         """Fetch one channel by id."""
+
+
+class DiscordClientProtocol(ChannelAccessClientProtocol, Protocol):
+    """Protocol for Discord client interactions used by tools and tests."""
 
     async def list_guild_channels(self, guild_id: str) -> list[DiscordChannel]:
         """List channels visible to the bot in a guild."""
@@ -94,7 +98,7 @@ async def assert_channel_is_allowed(
     *,
     channel_id: str,
     settings: Settings,
-    client: DiscordClientProtocol,
+    client: ChannelAccessClientProtocol,
 ) -> None:
     """Validate that a channel is allowed by the local policy."""
 

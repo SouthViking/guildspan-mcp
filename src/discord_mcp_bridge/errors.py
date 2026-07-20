@@ -15,3 +15,7 @@ class DiscordPermissionError(DiscordMcpBridgeError):
 
 class DiscordApiError(DiscordMcpBridgeError):
     """Raised when the Discord REST API returns an error."""
+
+
+class DiscordAttachmentError(DiscordMcpBridgeError):
+    """Raised when a Discord attachment cannot be safely downloaded."""

@@ -68,3 +68,34 @@ async def test_discord_client_calls_read_only_people_endpoints() -> None:
         "https://discord.example/api/v10/guilds/guild-1/members/search?query=South&limit=25",
         "https://discord.example/api/v10/guilds/guild-1/roles",
     ]
+
+
+@pytest.mark.asyncio
+async def test_discord_client_fetches_one_message() -> None:
+    requested_urls: list[str] = []
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        requested_urls.append(str(request.url))
+        return httpx.Response(
+            status_code=200,
+            json={"id": "message-1", "attachments": []},
+        )
+
+    client = DiscordClient(
+        bot_token="token",
+        base_url="https://discord.example/api/v10",
+        transport=httpx.MockTransport(handler),
+    )
+
+    try:
+        message = await client.get_channel_message(
+            channel_id="channel-1",
+            message_id="message-1",
+        )
+    finally:
+        await client.aclose()
+
+    assert message["id"] == "message-1"
+    assert requested_urls == [
+        "https://discord.example/api/v10/channels/channel-1/messages/message-1"
+    ]

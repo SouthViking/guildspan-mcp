@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEFAULT_MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 
 
 class Settings(BaseSettings):
@@ -21,6 +24,11 @@ class Settings(BaseSettings):
     discord_actor_name: str | None = None
     discord_actor_discord_id: str | None = None
     discord_append_attribution: bool = True
+    discord_max_attachment_bytes: int = Field(
+        default=DEFAULT_MAX_ATTACHMENT_BYTES,
+        gt=0,
+    )
+    discord_allowed_attachment_mime_types: str | None = None
 
     @property
     def default_guild_id(self) -> str | None:
@@ -40,6 +48,17 @@ class Settings(BaseSettings):
 
         return _parse_csv_ids(self.discord_allowed_channels)
 
+    @property
+    def allowed_attachment_mime_patterns(self) -> set[str]:
+        """Return optional normalized MIME patterns allowed for downloads."""
+
+        return {
+            value.lower()
+            for value in _parse_csv_values(
+                self.discord_allowed_attachment_mime_types
+            )
+        }
+
 
 def load_settings() -> Settings:
     """Load settings from environment variables and an optional local .env file."""
@@ -48,6 +67,10 @@ def load_settings() -> Settings:
 
 
 def _parse_csv_ids(raw_value: str | None) -> set[str]:
+    return _parse_csv_values(raw_value)
+
+
+def _parse_csv_values(raw_value: str | None) -> set[str]:
     if raw_value is None:
         return set()
     return {part.strip() for part in raw_value.split(",") if part.strip()}

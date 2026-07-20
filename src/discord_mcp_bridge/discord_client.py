@@ -203,6 +203,19 @@ class DiscordClient:
             messages.append(cast(dict[str, object], item))
         return messages
 
+    async def get_channel_message(
+        self,
+        *,
+        channel_id: str,
+        message_id: str,
+    ) -> dict[str, object]:
+        """Fetch one message so attachment URLs are current when downloaded."""
+
+        response = await self._client.get(
+            f"/channels/{channel_id}/messages/{message_id}"
+        )
+        return self._decode_response(response)
+
     async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
         """Send a message to a Discord channel."""
 

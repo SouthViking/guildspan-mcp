@@ -22,6 +22,9 @@ def make_message(
     channel_id: str = "channel-1",
     attachments: list[dict[str, object]] | None = None,
     embeds: list[dict[str, object]] | None = None,
+    stickers: list[dict[str, object]] | None = None,
+    poll: dict[str, object] | None = None,
+    components: list[dict[str, object]] | None = None,
     mentions: list[dict[str, object]] | None = None,
     pinned: bool = False,
     message_type: int = 0,
@@ -44,6 +47,9 @@ def make_message(
         },
         "attachments": attachments or [],
         "embeds": embeds or [],
+        "sticker_items": stickers or [],
+        "poll": poll,
+        "components": components or [],
         "mentions": mentions or [],
         "mention_roles": [],
     }
@@ -178,10 +184,44 @@ async def test_discord_read_messages_filters_and_summarizes_context() -> None:
                         "id": "attachment-1",
                         "filename": "screenshot.png",
                         "url": "https://cdn.example/screenshot.png",
+                        "proxy_url": "https://proxy.example/screenshot.png",
+                        "content_type": "image/png",
                         "size": 123,
+                        "width": 800,
+                        "height": 600,
+                        "description": "deploy result",
                     }
                 ],
-                embeds=[{"type": "rich", "title": "Deploy"}],
+                embeds=[
+                    {
+                        "type": "rich",
+                        "title": "Deploy",
+                        "image": {
+                            "url": "https://example.com/full.png",
+                            "proxy_url": "https://proxy.example/full.png",
+                            "width": 800,
+                            "height": 600,
+                            "content_type": "image/png",
+                        },
+                        "thumbnail": {"url": "https://example.com/thumb.png"},
+                        "video": {
+                            "url": "https://example.com/demo.mp4",
+                            "width": 1920,
+                            "height": 1080,
+                        },
+                    }
+                ],
+                stickers=[{"id": "sticker-1", "name": "Ship it", "format_type": 1}],
+                poll={
+                    "question": {"text": "Ship?"},
+                    "answers": [{"answer_id": 1, "poll_media": {"text": "Yes"}}],
+                },
+                components=[
+                    {
+                        "type": 1,
+                        "components": [{"type": 2, "label": "Details", "custom_id": "details"}],
+                    }
+                ],
                 mentions=[{"id": "user-9", "username": "bob", "bot": False}],
             ),
             make_message(message_id="101", content="hello"),
@@ -216,12 +256,23 @@ async def test_discord_read_messages_filters_and_summarizes_context() -> None:
         {
             "id": "attachment-1",
             "filename": "screenshot.png",
+            "title": None,
+            "description": "deploy result",
             "url": "https://cdn.example/screenshot.png",
-            "proxy_url": None,
-            "content_type": None,
+            "proxy_url": "https://proxy.example/screenshot.png",
+            "content_type": "image/png",
             "size": 123,
-            "width": None,
-            "height": None,
+            "width": 800,
+            "height": 600,
+            "ephemeral": None,
+            "duration_secs": None,
+            "waveform": None,
+            "flags": None,
+            "placeholder": None,
+            "placeholder_version": None,
+            "clip_created_at": None,
+            "application": None,
+            "clip_participants": [],
         }
     ]
     assert messages[0]["embeds"] == [
@@ -231,8 +282,77 @@ async def test_discord_read_messages_filters_and_summarizes_context() -> None:
             "description": None,
             "url": None,
             "timestamp": None,
+            "color": None,
+            "footer": None,
+            "image": {
+                "url": "https://example.com/full.png",
+                "proxy_url": "https://proxy.example/full.png",
+                "height": 600,
+                "width": 800,
+                "content_type": "image/png",
+                "placeholder": None,
+                "placeholder_version": None,
+                "flags": None,
+            },
+            "thumbnail": {
+                "url": "https://example.com/thumb.png",
+                "proxy_url": None,
+                "height": None,
+                "width": None,
+                "content_type": None,
+                "placeholder": None,
+                "placeholder_version": None,
+                "flags": None,
+            },
+            "video": {
+                "url": "https://example.com/demo.mp4",
+                "proxy_url": None,
+                "height": 1080,
+                "width": 1920,
+                "content_type": None,
+                "placeholder": None,
+                "placeholder_version": None,
+                "flags": None,
+            },
+            "provider": None,
+            "author": None,
+            "fields": [],
         }
     ]
+    assert messages[0]["stickers"] == [
+        {"id": "sticker-1", "name": "Ship it", "format_type": 1}
+    ]
+    assert messages[0]["poll"] == {
+        "question": {"text": "Ship?"},
+        "answers": [{"answer_id": 1, "poll_media": {"text": "Yes"}}],
+    }
+    assert messages[0]["components"] == [
+        {
+            "type": 1,
+            "components": [{"type": 2, "label": "Details", "custom_id": "details"}],
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discord_read_messages_can_omit_new_multimedia_sections() -> None:
+    fake_client = FakeDiscordClient(
+        messages=[make_message(message_id="101", content="media")]
+    )
+
+    result = await _discord_read_messages(
+        channel_id="channel-1",
+        include_stickers=False,
+        include_poll=False,
+        include_components=False,
+        settings=make_settings(discord_bot_token="token"),
+        client=fake_client,
+    )
+
+    messages = cast(list[dict[str, object]], result["messages"])
+    assert "stickers" not in messages[0]
+    assert "poll" not in messages[0]
+    assert "components" not in messages[0]
 
 
 @pytest.mark.asyncio

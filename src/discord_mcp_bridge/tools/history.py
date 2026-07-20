@@ -38,6 +38,9 @@ async def discord_read_messages(
     include_content: bool = True,
     include_attachments: bool = True,
     include_embeds: bool = True,
+    include_stickers: bool = True,
+    include_poll: bool = True,
+    include_components: bool = True,
     include_reactions: bool = True,
     include_mentions: bool = True,
     include_referenced_message: bool = True,
@@ -65,6 +68,9 @@ async def discord_read_messages(
         include_content=include_content,
         include_attachments=include_attachments,
         include_embeds=include_embeds,
+        include_stickers=include_stickers,
+        include_poll=include_poll,
+        include_components=include_components,
         include_reactions=include_reactions,
         include_mentions=include_mentions,
         include_referenced_message=include_referenced_message,
@@ -93,6 +99,9 @@ async def _discord_read_messages(
     include_content: bool = True,
     include_attachments: bool = True,
     include_embeds: bool = True,
+    include_stickers: bool = True,
+    include_poll: bool = True,
+    include_components: bool = True,
     include_reactions: bool = True,
     include_mentions: bool = True,
     include_referenced_message: bool = True,
@@ -181,6 +190,9 @@ async def _discord_read_messages(
                 include_content=include_content,
                 include_attachments=include_attachments,
                 include_embeds=include_embeds,
+                include_stickers=include_stickers,
+                include_poll=include_poll,
+                include_components=include_components,
                 include_reactions=include_reactions,
                 include_mentions=include_mentions,
                 include_referenced_message=include_referenced_message,
@@ -311,6 +323,9 @@ def _summarize_message(
     include_content: bool,
     include_attachments: bool,
     include_embeds: bool,
+    include_stickers: bool,
+    include_poll: bool,
+    include_components: bool,
     include_reactions: bool,
     include_mentions: bool,
     include_referenced_message: bool,
@@ -341,6 +356,19 @@ def _summarize_message(
             _summarize_embed(item)
             for item in _dict_list_field(message, "embeds")
         ]
+    if include_stickers:
+        summary["stickers"] = [
+            _summarize_sticker(item)
+            for item in _dict_list_field(message, "sticker_items")
+        ]
+    if include_poll:
+        poll = _dict_field(message, "poll")
+        summary["poll"] = _summarize_poll(poll) if poll is not None else None
+    if include_components:
+        summary["components"] = [
+            _copy_discord_object(item)
+            for item in _dict_list_field(message, "components")
+        ]
     if include_reactions:
         summary["reactions"] = [
             _summarize_reaction(item)
@@ -365,7 +393,7 @@ def _summarize_message(
 def _summarize_referenced_message(
     message: dict[str, object],
 ) -> dict[str, object]:
-    return {
+    summary: dict[str, object] = {
         "id": _str_field(message, "id"),
         "channel_id": _str_field(message, "channel_id"),
         "type": _int_field(message, "type"),
@@ -373,6 +401,25 @@ def _summarize_referenced_message(
         "timestamp": _str_field(message, "timestamp"),
         "author": _summarize_user(_dict_field(message, "author")),
     }
+    summary["attachments"] = [
+        _summarize_attachment(item)
+        for item in _dict_list_field(message, "attachments")
+    ]
+    summary["embeds"] = [
+        _summarize_embed(item)
+        for item in _dict_list_field(message, "embeds")
+    ]
+    summary["stickers"] = [
+        _summarize_sticker(item)
+        for item in _dict_list_field(message, "sticker_items")
+    ]
+    poll = _dict_field(message, "poll")
+    summary["poll"] = _summarize_poll(poll) if poll is not None else None
+    summary["components"] = [
+        _copy_discord_object(item)
+        for item in _dict_list_field(message, "components")
+    ]
+    return summary
 
 
 def _summarize_user(user: dict[str, object] | None) -> dict[str, object] | None:
@@ -390,12 +437,28 @@ def _summarize_attachment(attachment: dict[str, object]) -> dict[str, object]:
     return {
         "id": _str_field(attachment, "id"),
         "filename": _str_field(attachment, "filename"),
+        "title": _str_field(attachment, "title"),
+        "description": _str_field(attachment, "description"),
         "url": _str_field(attachment, "url"),
         "proxy_url": _str_field(attachment, "proxy_url"),
         "content_type": _str_field(attachment, "content_type"),
         "size": _int_field(attachment, "size"),
         "width": _int_field(attachment, "width"),
         "height": _int_field(attachment, "height"),
+        "ephemeral": _bool_field(attachment, "ephemeral"),
+        "duration_secs": _number_field(attachment, "duration_secs"),
+        "waveform": _str_field(attachment, "waveform"),
+        "flags": _int_field(attachment, "flags"),
+        "placeholder": _str_field(attachment, "placeholder"),
+        "placeholder_version": _int_field(attachment, "placeholder_version"),
+        "clip_created_at": _str_field(attachment, "clip_created_at"),
+        "application": _copy_optional_discord_object(
+            _dict_field(attachment, "application")
+        ),
+        "clip_participants": [
+            _summarize_user(item)
+            for item in _dict_list_field(attachment, "clip_participants")
+        ],
     }
 
 
@@ -406,7 +469,99 @@ def _summarize_embed(embed: dict[str, object]) -> dict[str, object]:
         "description": _str_field(embed, "description"),
         "url": _str_field(embed, "url"),
         "timestamp": _str_field(embed, "timestamp"),
+        "color": _int_field(embed, "color"),
+        "footer": _summarize_embed_footer(_dict_field(embed, "footer")),
+        "image": _summarize_embed_media(_dict_field(embed, "image")),
+        "thumbnail": _summarize_embed_media(_dict_field(embed, "thumbnail")),
+        "video": _summarize_embed_media(_dict_field(embed, "video")),
+        "provider": _summarize_embed_provider(_dict_field(embed, "provider")),
+        "author": _summarize_embed_author(_dict_field(embed, "author")),
+        "fields": [
+            {
+                "name": _str_field(field, "name"),
+                "value": _str_field(field, "value"),
+                "inline": _bool_field(field, "inline"),
+            }
+            for field in _dict_list_field(embed, "fields")
+        ],
     }
+
+
+def _summarize_embed_media(
+    media: dict[str, object] | None,
+) -> dict[str, object] | None:
+    if media is None:
+        return None
+    return {
+        "url": _str_field(media, "url"),
+        "proxy_url": _str_field(media, "proxy_url"),
+        "height": _int_field(media, "height"),
+        "width": _int_field(media, "width"),
+        "content_type": _str_field(media, "content_type"),
+        "placeholder": _str_field(media, "placeholder"),
+        "placeholder_version": _int_field(media, "placeholder_version"),
+        "flags": _int_field(media, "flags"),
+    }
+
+
+def _summarize_embed_footer(
+    footer: dict[str, object] | None,
+) -> dict[str, object] | None:
+    if footer is None:
+        return None
+    return {
+        "text": _str_field(footer, "text"),
+        "icon_url": _str_field(footer, "icon_url"),
+        "proxy_icon_url": _str_field(footer, "proxy_icon_url"),
+    }
+
+
+def _summarize_embed_provider(
+    provider: dict[str, object] | None,
+) -> dict[str, object] | None:
+    if provider is None:
+        return None
+    return {
+        "name": _str_field(provider, "name"),
+        "url": _str_field(provider, "url"),
+    }
+
+
+def _summarize_embed_author(
+    author: dict[str, object] | None,
+) -> dict[str, object] | None:
+    if author is None:
+        return None
+    return {
+        "name": _str_field(author, "name"),
+        "url": _str_field(author, "url"),
+        "icon_url": _str_field(author, "icon_url"),
+        "proxy_icon_url": _str_field(author, "proxy_icon_url"),
+    }
+
+
+def _summarize_sticker(sticker: dict[str, object]) -> dict[str, object]:
+    return {
+        "id": _str_field(sticker, "id"),
+        "name": _str_field(sticker, "name"),
+        "format_type": _int_field(sticker, "format_type"),
+    }
+
+
+def _summarize_poll(poll: dict[str, object]) -> dict[str, object]:
+    return _copy_discord_object(poll)
+
+
+def _copy_optional_discord_object(
+    value: dict[str, object] | None,
+) -> dict[str, object] | None:
+    return _copy_discord_object(value) if value is not None else None
+
+
+def _copy_discord_object(value: dict[str, object]) -> dict[str, object]:
+    """Copy a JSON object while preserving Discord fields added after this release."""
+
+    return dict(value)
 
 
 def _summarize_reaction(reaction: dict[str, object]) -> dict[str, object]:
@@ -484,6 +639,15 @@ def _int_field(source: dict[str, object], key: str) -> int | None:
     if isinstance(value, bool):
         return None
     if isinstance(value, int):
+        return value
+    return None
+
+
+def _number_field(source: dict[str, object], key: str) -> int | float | None:
+    value = source.get(key)
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
         return value
     return None
 

@@ -4,7 +4,7 @@
 
 Discord MCP Bridge is a local MCP server that exposes Discord bot actions to AI coding clients such as Codex, Claude, Cursor, and other MCP-capable tools.
 
-It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, message reading and search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
+It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, rich message and media inspection, secure attachment downloads, message search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
 It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
 
@@ -22,8 +22,9 @@ config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
 client and verify that discord_health_check, discord_list_channels,
 discord_get_current_bot_user, discord_get_user, discord_get_member,
 discord_search_members, discord_list_roles,
-discord_read_messages, discord_search_messages, discord_send_message,
-discord_create_thread, and discord_add_reaction appear.
+discord_read_messages, discord_download_attachment, discord_search_messages,
+discord_send_message, discord_edit_own_message, discord_create_thread, and
+discord_add_reaction appear.
 ```
 
 Expected sequence:
@@ -69,6 +70,7 @@ Contribution notes live in [CONTRIBUTING.md](CONTRIBUTING.md).
 - `discord_search_members` is implemented with optional role resolution.
 - `discord_list_roles` is implemented.
 - `discord_read_messages` is implemented.
+- `discord_download_attachment` is implemented with CDN, size, and MIME validation.
 - `discord_search_messages` is implemented.
 - `discord_send_message` is implemented.
 - `discord_edit_own_message` is implemented.
@@ -157,6 +159,8 @@ Minimum Discord permissions:
 
 The read-only user, individual member, member search, and role-listing tools do not require adding moderation permissions to the bot role. Bulk member listing is intentionally not exposed because Discord requires the privileged `GUILD_MEMBERS` intent for that endpoint.
 
+For message bodies and rich message fields, enable the privileged `MESSAGE_CONTENT` intent for the bot in the Discord Developer Portal. Without it, Discord can return empty `content`, `attachments`, `embeds`, and `components`, and omit poll data for messages where the bot does not otherwise receive content access.
+
 Optional but recommended local policy controls:
 
 - `DISCORD_ALLOWED_CHANNELS`
@@ -170,6 +174,8 @@ DISCORD_ALLOWED_CHANNELS=
 DISCORD_ACTOR_NAME=
 DISCORD_ACTOR_DISCORD_ID=
 DISCORD_APPEND_ATTRIBUTION=true
+DISCORD_MAX_ATTACHMENT_BYTES=10485760
+DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=
 ```
 
 Minimum configuration:
@@ -194,6 +200,8 @@ Behavior notes:
 - If `DISCORD_ALLOWED_CHANNELS` is set, channel-scoped tools only operate on listed channel IDs.
 - If `DISCORD_ALLOWED_GUILDS` is set, channel-scoped tools validate the target channel's guild before acting.
 - If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools append actor attribution when `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID` is configured.
+- `DISCORD_MAX_ATTACHMENT_BYTES` is the server-side attachment download ceiling; the default is 10 MiB. A tool caller can request a smaller per-call `max_bytes`, but cannot raise this ceiling.
+- `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` optionally restricts downloads with comma-separated exact MIME types or wildcards, for example `image/*,application/pdf`. When unset, any syntactically valid MIME type is accepted.
 
 Discord setup notes:
 
@@ -434,7 +442,7 @@ Inputs:
 - `scan_limit`: optional maximum number of raw messages to scan before filtering, from 1 to 1000.
 - `page_size`: optional Discord API page size, from 1 to 100.
 - Optional local filters: `author_id`, `author_is_bot`, `contains`, `case_sensitive`, `has_attachments`, `has_embeds`, `pinned`, `mentions_user_id`, and `message_type`.
-- Optional include flags: `include_content`, `include_attachments`, `include_embeds`, `include_reactions`, `include_mentions`, and `include_referenced_message`.
+- Optional include flags: `include_content`, `include_attachments`, `include_embeds`, `include_stickers`, `include_poll`, `include_components`, `include_reactions`, `include_mentions`, and `include_referenced_message`.
 - `oldest_first`: optionally return matched messages in chronological order instead of Discord's default newest-first order.
 
 Current behavior:
@@ -443,8 +451,32 @@ Current behavior:
 - Uses Discord's native message cursors where possible.
 - Supports local filtering after fetching messages from Discord.
 - Supports controlled pagination for ranges and selective filters.
-- Returns structured context including message IDs, author summaries, timestamps, content, attachments, embeds, reactions, mentions, references, and a `next_before` cursor for continuing from the last inspected message.
+- Returns structured context including message IDs, author summaries, timestamps, content, detailed attachment metadata, rich embeds, reactions, mentions, references, and a `next_before` cursor for continuing from the last inspected message.
+- Embed output includes image, thumbnail, and video metadata plus provider, author, footer, color, and fields.
+- Returns sticker items, poll payloads, and message components by default. Their include flags can reduce response size when that context is not needed.
+- Media entries in this response are metadata and URLs. Use `discord_download_attachment` when the MCP client needs the actual attachment bytes.
 - Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+
+### `discord_download_attachment`
+
+Inputs:
+
+- `channel_id`: Discord channel ID.
+- `message_id`: ID of the message that owns the attachment.
+- `attachment_id`: attachment ID returned by `discord_read_messages`.
+- `max_bytes`: optional per-call byte ceiling. It can lower, but never exceed, `DISCORD_MAX_ATTACHMENT_BYTES`.
+
+Current behavior:
+
+- Fetches the message again immediately before downloading so Discord can provide a current signed attachment URL.
+- Only downloads HTTPS URLs from Discord attachment CDN hosts and paths; caller-supplied URLs are never accepted.
+- Streams the response while enforcing metadata, `Content-Length`, and observed-byte limits, and rejects redirects.
+- Validates Discord's declared MIME type against the CDN response and applies the optional `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` policy.
+- Uses an unauthenticated CDN client, so the bot token is never forwarded with the file request.
+- Returns images and audio as native MCP image/audio blocks. Videos and other files are returned as binary embedded-resource blocks with filename, MIME type, and size metadata in the structured result.
+- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+
+Discord attachment URLs are signed and can expire. Agents should pass the IDs from `discord_read_messages` to this tool instead of caching and downloading an old URL themselves.
 
 ### `discord_search_messages`
 

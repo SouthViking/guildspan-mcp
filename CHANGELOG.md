@@ -9,6 +9,9 @@ style sections and uses conventional commits for commit messages.
 
 ### Added
 
+- Rich message-history output for attachment details, embed images/thumbnails/videos, stickers, polls, and components.
+- `discord_download_attachment` for bounded, MIME-validated Discord CDN downloads returned as native MCP content.
+- Attachment download controls through `DISCORD_MAX_ATTACHMENT_BYTES` and `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES`.
 - Read-only tools for bot identity, user lookup, guild member lookup and search, and guild role listing.
 - Optional role-name resolution for member lookup and search without adding moderation permissions.
 - GitHub Actions CI for pull requests and pushes to `main`.

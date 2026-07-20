@@ -2,6 +2,7 @@
 
 from fastmcp import FastMCP
 
+from discord_mcp_bridge.tools.attachments import discord_download_attachment
 from discord_mcp_bridge.tools.channels import discord_get_channel, discord_list_channels
 from discord_mcp_bridge.tools.diagnostics import discord_health_check
 from discord_mcp_bridge.tools.history import discord_read_messages
@@ -31,6 +32,7 @@ def create_server() -> FastMCP:
     mcp.tool(discord_search_members)
     mcp.tool(discord_list_roles)
     mcp.tool(discord_read_messages)
+    mcp.tool(discord_download_attachment)
     mcp.tool(discord_search_messages)
     mcp.tool(discord_send_message)
     mcp.tool(discord_edit_own_message)

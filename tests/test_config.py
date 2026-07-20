@@ -13,6 +13,8 @@ def test_settings_can_be_constructed_without_discord_token() -> None:
 
     assert settings.discord_bot_token is None
     assert settings.discord_append_attribution is True
+    assert settings.discord_max_attachment_bytes == 10 * 1024 * 1024
+    assert settings.allowed_attachment_mime_patterns == set()
 
 
 def test_load_settings_returns_settings() -> None:
@@ -29,3 +31,16 @@ def test_settings_parse_allowed_ids() -> None:
     assert settings.default_guild_id == "guild-123"
     assert settings.allowed_guild_ids == {"123", "456"}
     assert settings.allowed_channel_ids == {"abc", "def"}
+
+
+def test_settings_parse_attachment_mime_patterns() -> None:
+    settings = make_settings(
+        discord_max_attachment_bytes=2048,
+        discord_allowed_attachment_mime_types=" image/*, APPLICATION/PDF ,,",
+    )
+
+    assert settings.discord_max_attachment_bytes == 2048
+    assert settings.allowed_attachment_mime_patterns == {
+        "image/*",
+        "application/pdf",
+    }

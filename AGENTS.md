@@ -8,7 +8,7 @@ If you are an AI coding agent and the user asks you to "connect", "configure", "
 
 - MCP server name: `discord-mcp-bridge`
 - Transport: local process over `stdio`
-- Primary tools today: `discord_health_check`, `discord_list_channels`, `discord_get_channel`, `discord_get_current_bot_user`, `discord_get_user`, `discord_get_member`, `discord_search_members`, `discord_list_roles`, `discord_read_messages`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
+- Primary tools today: `discord_health_check`, `discord_list_channels`, `discord_get_channel`, `discord_get_current_bot_user`, `discord_get_user`, `discord_get_member`, `discord_search_members`, `discord_list_roles`, `discord_read_messages`, `discord_download_attachment`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
 
 ## Required Setup
 
@@ -70,6 +70,8 @@ DISCORD_ALLOWED_GUILDS=123456789012345678
 DISCORD_ACTOR_NAME=SouthViking
 DISCORD_ACTOR_DISCORD_ID=123456789012345678
 DISCORD_APPEND_ATTRIBUTION=true
+DISCORD_MAX_ATTACHMENT_BYTES=10485760
+DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=image/*,application/pdf
 ```
 
 ## Preferred MCP Command
@@ -192,7 +194,8 @@ After registration, verify these things in order:
 3. A channel listing succeeds against a known guild ID.
 4. An individual member lookup succeeds against a known user ID.
 5. A message history read succeeds against a known channel ID.
-6. A test message succeeds against a known channel ID.
+6. An attachment download returns a native MCP media or embedded-resource block.
+7. A test message succeeds against a known channel ID.
 
 ## Reloading After Changes
 
@@ -206,3 +209,5 @@ MCP clients usually discover tools when they start the local server process. Aft
 - The effective permissions are the intersection of:
   - Discord permissions granted to the bot
   - local allowlists configured by the installer
+- Attachment downloads are limited by `DISCORD_MAX_ATTACHMENT_BYTES`, defaulting to 10 MiB.
+- `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` can optionally restrict downloads with comma-separated exact MIME types or patterns such as `image/*`.

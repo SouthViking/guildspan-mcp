@@ -7,6 +7,10 @@ style sections and uses conventional commits for commit messages.
 
 ## [Unreleased]
 
+### Changed
+
+- Message attribution now places the configured actor above the message body and keeps the configurable `sent using Discord Bridge` brand footer below it.
+
 ### Added
 
 - Rich message-history output for attachment details, embed images/thumbnails/videos, stickers, polls, and components.

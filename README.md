@@ -77,7 +77,7 @@ Contribution notes live in [CONTRIBUTING.md](CONTRIBUTING.md).
 - `discord_create_thread` is implemented.
 - `discord_add_reaction` is implemented.
 - Local allowlists for channels and guilds are supported.
-- Optional actor attribution is supported.
+- Configurable branded message attribution is supported.
 - Installation snippets are included for Codex, Claude, and Cursor.
 
 ## Planned Flow
@@ -174,6 +174,7 @@ DISCORD_ALLOWED_CHANNELS=
 DISCORD_ACTOR_NAME=
 DISCORD_ACTOR_DISCORD_ID=
 DISCORD_APPEND_ATTRIBUTION=true
+DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
 DISCORD_MAX_ATTACHMENT_BYTES=10485760
 DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=
 ```
@@ -192,6 +193,7 @@ DISCORD_DEFAULT_GUILD_ID=your-server-id
 DISCORD_ALLOWED_CHANNELS=channel-id
 DISCORD_ACTOR_NAME=your-name
 DISCORD_APPEND_ATTRIBUTION=true
+DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
 ```
 
 Behavior notes:
@@ -199,7 +201,9 @@ Behavior notes:
 - If `DISCORD_DEFAULT_GUILD_ID` is set, tools that accept an optional guild ID can use that guild deterministically.
 - If `DISCORD_ALLOWED_CHANNELS` is set, channel-scoped tools only operate on listed channel IDs.
 - If `DISCORD_ALLOWED_GUILDS` is set, channel-scoped tools validate the target channel's guild before acting.
-- If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools append actor attribution when `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID` is configured.
+- If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools place the configured actor in bold above the message body and append a Discord subtext footer. `DISCORD_ACTOR_NAME` supplies the visible actor label; `DISCORD_ACTOR_DISCORD_ID` is a mention-style fallback.
+- `DISCORD_ATTRIBUTION_TEXT` controls the branded portion and defaults to `sent using Discord Bridge`.
+- Set `DISCORD_ATTRIBUTION_TEXT` to a blank value to restore the legacy `sent via MCP by ...` footer from `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID`.
 - `DISCORD_MAX_ATTACHMENT_BYTES` is the server-side attachment download ceiling; the default is 10 MiB. A tool caller can request a smaller per-call `max_bytes`, but cannot raise this ceiling.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` optionally restricts downloads with comma-separated exact MIME types or wildcards, for example `image/*,application/pdf`. When unset, any syntactically valid MIME type is accepted.
 
@@ -267,6 +271,7 @@ DISCORD_DEFAULT_GUILD_ID = "123456789012345678"
 DISCORD_ALLOWED_CHANNELS = "123456789012345678"
 DISCORD_ACTOR_NAME = "SouthViking"
 DISCORD_APPEND_ATTRIBUTION = "true"
+DISCORD_ATTRIBUTION_TEXT = "sent using Discord Bridge"
 ```
 
 On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
@@ -286,7 +291,8 @@ Add this to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
         "DISCORD_DEFAULT_GUILD_ID": "123456789012345678",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "SouthViking",
-        "DISCORD_APPEND_ATTRIBUTION": "true"
+        "DISCORD_APPEND_ATTRIBUTION": "true",
+        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
       }
     }
   }
@@ -310,7 +316,8 @@ Add this to your `claude_desktop_config.json`:
         "DISCORD_DEFAULT_GUILD_ID": "123456789012345678",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "SouthViking",
-        "DISCORD_APPEND_ATTRIBUTION": "true"
+        "DISCORD_APPEND_ATTRIBUTION": "true",
+        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
       }
     }
   }
@@ -521,7 +528,7 @@ Inputs:
 Current behavior:
 
 - Edits a message through Discord's bot-token API.
-- Applies the same optional actor attribution as `discord_send_message`.
+- Applies the same optional branded attribution as `discord_send_message`.
 - Returns `status`, `message_id`, `channel_id`, `content`, and `author_username`.
 - Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
 

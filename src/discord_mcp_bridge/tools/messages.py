@@ -127,6 +127,16 @@ def _format_message_content(*, content: str, settings: Settings) -> str:
     if not settings.discord_append_attribution:
         return content
 
+    attribution_text = _normalized_or_none(settings.discord_attribution_text)
+    actor_label = _format_actor_label(settings)
+    if attribution_text is not None:
+        attributed_content = (
+            f"{actor_label}\n{content}" if actor_label is not None else content
+        )
+        return f"{attributed_content}\n\n-# {attribution_text}"
+
+    # Preserve the former actor-specific format when the branded text is
+    # explicitly configured as blank.
     actor_name = _normalized_or_none(settings.discord_actor_name)
     actor_discord_id = _normalized_or_none(settings.discord_actor_discord_id)
 
@@ -135,6 +145,17 @@ def _format_message_content(*, content: str, settings: Settings) -> str:
     if actor_name is not None:
         return f"{content}\n\n-# sent via MCP by {actor_name}"
     return content
+
+
+def _format_actor_label(settings: Settings) -> str | None:
+    actor_name = _normalized_or_none(settings.discord_actor_name)
+    if actor_name is not None:
+        return f"**{actor_name}**"
+
+    actor_discord_id = _normalized_or_none(settings.discord_actor_discord_id)
+    if actor_discord_id is not None:
+        return f"<@{actor_discord_id}>"
+    return None
 
 
 def _normalized_or_none(value: str | None) -> str | None:

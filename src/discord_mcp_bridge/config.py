@@ -6,6 +6,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
+DEFAULT_ATTRIBUTION_TEXT = "sent using Discord Bridge"
 
 
 class Settings(BaseSettings):
@@ -24,6 +25,7 @@ class Settings(BaseSettings):
     discord_actor_name: str | None = None
     discord_actor_discord_id: str | None = None
     discord_append_attribution: bool = True
+    discord_attribution_text: str | None = DEFAULT_ATTRIBUTION_TEXT
     discord_max_attachment_bytes: int = Field(
         default=DEFAULT_MAX_ATTACHMENT_BYTES,
         gt=0,

@@ -164,14 +164,16 @@ async def test_discord_send_message_sends_message() -> None:
         "status": "sent",
         "message_id": "message-1",
         "channel_id": "1234567890",
-        "content": "hello",
+        "content": "hello\n\n-# sent using Discord Bridge",
         "author_username": "bridge-bot",
     }
-    assert fake_client.sent_payloads == [("1234567890", "hello")]
+    assert fake_client.sent_payloads == [
+        ("1234567890", "hello\n\n-# sent using Discord Bridge")
+    ]
 
 
 @pytest.mark.asyncio
-async def test_discord_send_message_appends_actor_attribution() -> None:
+async def test_discord_send_message_appends_branded_attribution() -> None:
     fake_client = FakeDiscordClient()
 
     result = await _discord_send_message(
@@ -181,14 +183,34 @@ async def test_discord_send_message_appends_actor_attribution() -> None:
             discord_bot_token="token",
             discord_actor_discord_id="4242",
             discord_append_attribution=True,
+            discord_attribution_text="sent using My Bridge",
+        ),
+        client=fake_client,
+    )
+
+    assert result["content"] == "<@4242>\ndeploy done\n\n-# sent using My Bridge"
+    assert fake_client.sent_payloads == [
+        ("1234567890", "<@4242>\ndeploy done\n\n-# sent using My Bridge")
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_can_fall_back_to_actor_attribution() -> None:
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        content="deploy done",
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_actor_discord_id="4242",
+            discord_append_attribution=True,
+            discord_attribution_text=" ",
         ),
         client=fake_client,
     )
 
     assert result["content"] == "deploy done\n\n-# sent via MCP by <@4242>"
-    assert fake_client.sent_payloads == [
-        ("1234567890", "deploy done\n\n-# sent via MCP by <@4242>")
-    ]
 
 
 @pytest.mark.asyncio
@@ -274,7 +296,9 @@ async def test_discord_edit_own_message_applies_actor_attribution() -> None:
         settings=make_settings(
             discord_bot_token="token",
             discord_actor_name="SouthViking",
+            discord_actor_discord_id="4242",
             discord_append_attribution=True,
+            discord_attribution_text="sent using Discord Bridge",
         ),
         client=fake_client,
     )
@@ -283,9 +307,30 @@ async def test_discord_edit_own_message_applies_actor_attribution() -> None:
         "status": "edited",
         "message_id": "message-1",
         "channel_id": "1234567890",
-        "content": "updated\n\n-# sent via MCP by SouthViking",
+        "content": "**SouthViking**\nupdated\n\n-# sent using Discord Bridge",
         "author_username": "bridge-bot",
     }
     assert fake_client.edited_payloads == [
-        ("1234567890", "message-1", "updated\n\n-# sent via MCP by SouthViking")
+        (
+            "1234567890",
+            "message-1",
+            "**SouthViking**\nupdated\n\n-# sent using Discord Bridge",
+        )
     ]
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_can_disable_attribution() -> None:
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        content="plain message",
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_append_attribution=False,
+        ),
+        client=fake_client,
+    )
+
+    assert result["content"] == "plain message"

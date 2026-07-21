@@ -70,6 +70,7 @@ DISCORD_ALLOWED_GUILDS=123456789012345678
 DISCORD_ACTOR_NAME=SouthViking
 DISCORD_ACTOR_DISCORD_ID=123456789012345678
 DISCORD_APPEND_ATTRIBUTION=true
+DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
 DISCORD_MAX_ATTACHMENT_BYTES=10485760
 DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=image/*,application/pdf
 ```
@@ -131,6 +132,7 @@ DISCORD_BOT_TOKEN = "your-bot-token"
 DISCORD_ALLOWED_CHANNELS = "123456789012345678"
 DISCORD_ACTOR_NAME = "SouthViking"
 DISCORD_APPEND_ATTRIBUTION = "true"
+DISCORD_ATTRIBUTION_TEXT = "sent using Discord Bridge"
 ```
 
 On Windows, use:
@@ -153,7 +155,8 @@ Add to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "SouthViking",
-        "DISCORD_APPEND_ATTRIBUTION": "true"
+        "DISCORD_APPEND_ATTRIBUTION": "true",
+        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
       }
     }
   }
@@ -176,7 +179,8 @@ Add to `claude_desktop_config.json`:
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "SouthViking",
-        "DISCORD_APPEND_ATTRIBUTION": "true"
+        "DISCORD_APPEND_ATTRIBUTION": "true",
+        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
       }
     }
   }
@@ -211,3 +215,4 @@ MCP clients usually discover tools when they start the local server process. Aft
   - local allowlists configured by the installer
 - Attachment downloads are limited by `DISCORD_MAX_ATTACHMENT_BYTES`, defaulting to 10 MiB.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` can optionally restrict downloads with comma-separated exact MIME types or patterns such as `image/*`.
+- Sent and edited messages place the configured actor above the body and use `DISCORD_ATTRIBUTION_TEXT` as a footer when attribution is enabled.

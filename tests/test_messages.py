@@ -1,9 +1,16 @@
+import base64
+from collections.abc import Sequence
 from typing import Any, cast
 
 import pytest
 
 from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage, DiscordThread
+from discord_mcp_bridge.discord_client import (
+    DiscordChannel,
+    DiscordMessage,
+    DiscordThread,
+    DiscordUpload,
+)
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
 from discord_mcp_bridge.tools import messages as messages_module
 from discord_mcp_bridge.tools import _common as common_module
@@ -12,6 +19,7 @@ from discord_mcp_bridge.tools.messages import (
     _discord_send_message,
     discord_send_message,
 )
+from discord_mcp_bridge.tools.uploads import Base64Attachment
 
 
 def make_settings(**kwargs: object) -> Settings:
@@ -39,7 +47,9 @@ class FakeDiscordClient:
             content="hello",
             author_username="bridge-bot",
         )
-        self.sent_payloads: list[tuple[str, str]] = []
+        self.sent_payloads: list[tuple[str, str | None]] = []
+        self.sent_attachments: list[list[DiscordUpload]] = []
+        self.sent_sticker_ids: list[list[str]] = []
         self.closed = False
 
     async def get_channel(self, channel_id: str) -> DiscordChannel:
@@ -65,13 +75,37 @@ class FakeDiscordClient:
     ) -> list[dict[str, object]]:
         raise AssertionError("list_channel_messages should not be called by discord_send_message")
 
-    async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
+    async def send_message(
+        self,
+        *,
+        channel_id: str,
+        content: str | None,
+        attachments: Sequence[DiscordUpload] = (),
+        sticker_ids: Sequence[str] = (),
+    ) -> DiscordMessage:
         self.sent_payloads.append((channel_id, content))
+        self.sent_attachments.append(list(attachments))
+        self.sent_sticker_ids.append(list(sticker_ids))
+        returned_attachments = tuple(
+            {
+                "id": str(index),
+                "filename": attachment.filename,
+                "content_type": attachment.content_type,
+                "size": len(attachment.data),
+            }
+            for index, attachment in enumerate(attachments)
+        )
+        returned_stickers = tuple(
+            {"id": sticker_id, "name": f"sticker-{index}", "format_type": 1}
+            for index, sticker_id in enumerate(sticker_ids)
+        )
         return DiscordMessage(
             id=self.message.id,
             channel_id=channel_id,
-            content=content,
+            content=content or "",
             author_username=self.message.author_username,
+            attachments=returned_attachments,
+            stickers=returned_stickers,
         )
 
     async def edit_message(
@@ -145,7 +179,7 @@ async def test_discord_send_message_rejects_blank_channel_id() -> None:
 
 @pytest.mark.asyncio
 async def test_discord_send_message_rejects_blank_content() -> None:
-    with pytest.raises(ValueError, match="content is required"):
+    with pytest.raises(ValueError, match="At least one of content"):
         await discord_send_message(channel_id="1234567890", content=" ")
 
 
@@ -166,6 +200,8 @@ async def test_discord_send_message_sends_message() -> None:
         "channel_id": "1234567890",
         "content": "hello\n\n-# sent using Discord Bridge",
         "author_username": "bridge-bot",
+        "attachments": [],
+        "stickers": [],
     }
     assert fake_client.sent_payloads == [
         ("1234567890", "hello\n\n-# sent using Discord Bridge")
@@ -334,3 +370,158 @@ async def test_discord_send_message_can_disable_attribution() -> None:
     )
 
     assert result["content"] == "plain message"
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_sends_attachment_without_user_text() -> None:
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        attachments=[
+            Base64Attachment(
+                source_type="base64",
+                data_base64=base64.b64encode(b"GIF89a").decode("ascii"),
+                filename="party.gif",
+                content_type="image/gif",
+                description="Celebration",
+                spoiler=True,
+            )
+        ],
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_actor_name="SouthViking",
+        ),
+        client=fake_client,
+    )
+
+    assert fake_client.sent_payloads == [
+        (
+            "1234567890",
+            "**SouthViking**\n\n-# sent using Discord Bridge",
+        )
+    ]
+    assert fake_client.sent_attachments[0][0].filename == "SPOILER_party.gif"
+    assert fake_client.sent_attachments[0][0].description == "Celebration"
+    assert result["attachments"] == [
+        {
+            "id": "0",
+            "filename": "SPOILER_party.gif",
+            "content_type": "image/gif",
+            "size": 6,
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_combines_text_attachment_and_sticker() -> None:
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        content="launch",
+        attachments=[
+            Base64Attachment(
+                source_type="base64",
+                data_base64=base64.b64encode(b"audio").decode("ascii"),
+                filename="launch.mp3",
+                content_type="audio/mpeg",
+            )
+        ],
+        sticker_ids=["sticker-1"],
+        settings=make_settings(discord_bot_token="token"),
+        client=fake_client,
+    )
+
+    assert fake_client.sent_payloads == [
+        ("1234567890", "launch\n\n-# sent using Discord Bridge")
+    ]
+    assert fake_client.sent_sticker_ids == [["sticker-1"]]
+    assert result["stickers"] == [
+        {"id": "sticker-1", "name": "sticker-0", "format_type": 1}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_sends_sticker_without_user_text() -> None:
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        sticker_ids=["sticker-1"],
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_actor_name="SouthViking",
+        ),
+        client=fake_client,
+    )
+
+    assert fake_client.sent_payloads == [
+        (
+            "1234567890",
+            "**SouthViking**\n\n-# sent using Discord Bridge",
+        )
+    ]
+    assert fake_client.sent_attachments == [[]]
+    assert fake_client.sent_sticker_ids == [["sticker-1"]]
+    assert result["stickers"] == [
+        {"id": "sticker-1", "name": "sticker-0", "format_type": 1}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_can_send_media_with_no_generated_content() -> None:
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        attachments=[
+            Base64Attachment(
+                source_type="base64",
+                data_base64=base64.b64encode(b"PDF").decode("ascii"),
+                filename="document.pdf",
+            )
+        ],
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_append_attribution=False,
+        ),
+        client=fake_client,
+    )
+
+    assert fake_client.sent_payloads == [("1234567890", None)]
+    assert result["content"] == ""
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_rejects_invalid_sticker_lists() -> None:
+    settings = make_settings(discord_bot_token="token")
+    with pytest.raises(ValueError, match="more than 3"):
+        await _discord_send_message(
+            channel_id="1234567890",
+            sticker_ids=["1", "2", "3", "4"],
+            settings=settings,
+        )
+    with pytest.raises(ValueError, match="duplicates"):
+        await _discord_send_message(
+            channel_id="1234567890",
+            sticker_ids=["1", "1"],
+            settings=settings,
+        )
+    with pytest.raises(ValueError, match=r"sticker_ids\[0\] is required"):
+        await _discord_send_message(
+            channel_id="1234567890",
+            sticker_ids=[" "],
+            settings=settings,
+        )
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_validates_attributed_content_length() -> None:
+    with pytest.raises(ValueError, match="including configured attribution"):
+        await _discord_send_message(
+            channel_id="1234567890",
+            content="x" * 2000,
+            settings=make_settings(discord_bot_token="token"),
+            client=FakeDiscordClient(),
+        )

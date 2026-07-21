@@ -73,6 +73,11 @@ DISCORD_APPEND_ATTRIBUTION=true
 DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
 DISCORD_MAX_ATTACHMENT_BYTES=10485760
 DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=image/*,application/pdf
+DISCORD_ALLOWED_UPLOAD_PATHS=/absolute/path/to/allowed/media
+DISCORD_ALLOWED_UPLOAD_URL_HOSTS=cdn.example.com
+DISCORD_MAX_UPLOAD_BYTES=10485760
+DISCORD_MAX_UPLOAD_TOTAL_BYTES=25165824
+DISCORD_ALLOWED_UPLOAD_MIME_TYPES=image/*,audio/*,video/*,application/pdf
 ```
 
 ## Preferred MCP Command
@@ -200,6 +205,8 @@ After registration, verify these things in order:
 5. A message history read succeeds against a known channel ID.
 6. An attachment download returns a native MCP media or embedded-resource block.
 7. A test message succeeds against a known channel ID.
+8. A media-only test succeeds using base64 or an explicitly allowed local path.
+9. A combined text-and-file message returns attachment metadata.
 
 ## Reloading After Changes
 
@@ -215,4 +222,9 @@ MCP clients usually discover tools when they start the local server process. Aft
   - local allowlists configured by the installer
 - Attachment downloads are limited by `DISCORD_MAX_ATTACHMENT_BYTES`, defaulting to 10 MiB.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` can optionally restrict downloads with comma-separated exact MIME types or patterns such as `image/*`.
+- `discord_send_message` accepts optional `content`, up to 10 `attachments` from `path`, `url`, or `base64`, and up to 3 native `sticker_ids`.
+- Local path uploads are disabled unless absolute roots are configured in `DISCORD_ALLOWED_UPLOAD_PATHS`.
+- Public URL uploads reject non-HTTPS, credentialed, private/local destinations, unsafe redirects, and oversized responses. URL fetches never receive the Discord bot token.
+- Outgoing files are limited by `DISCORD_MAX_UPLOAD_BYTES` per file and `DISCORD_MAX_UPLOAD_TOTAL_BYTES` per message. `DISCORD_ALLOWED_UPLOAD_MIME_TYPES` can further restrict them.
+- File sending requires Discord's `ATTACH_FILES` permission. External native stickers may require `USE_EXTERNAL_STICKERS`.
 - Sent and edited messages place the configured actor above the body and use `DISCORD_ATTRIBUTION_TEXT` as a footer when attribution is enabled.

@@ -1,9 +1,15 @@
+from collections.abc import Sequence
 from typing import Any, cast
 
 import pytest
 
 from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage, DiscordThread
+from discord_mcp_bridge.discord_client import (
+    DiscordChannel,
+    DiscordMessage,
+    DiscordThread,
+    DiscordUpload,
+)
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
 from discord_mcp_bridge.tools.history import _discord_read_messages
 
@@ -116,7 +122,14 @@ class FakeDiscordClient:
             ]
         return messages[:limit]
 
-    async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
+    async def send_message(
+        self,
+        *,
+        channel_id: str,
+        content: str | None,
+        attachments: Sequence[DiscordUpload] = (),
+        sticker_ids: Sequence[str] = (),
+    ) -> DiscordMessage:
         raise AssertionError("send_message should not be called by discord_read_messages")
 
     async def edit_message(

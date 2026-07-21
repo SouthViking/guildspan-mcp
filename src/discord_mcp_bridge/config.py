@@ -6,6 +6,8 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
+DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+DEFAULT_MAX_UPLOAD_TOTAL_BYTES = 24 * 1024 * 1024
 DEFAULT_ATTRIBUTION_TEXT = "sent using Discord Bridge"
 
 
@@ -31,6 +33,18 @@ class Settings(BaseSettings):
         gt=0,
     )
     discord_allowed_attachment_mime_types: str | None = None
+    discord_allowed_upload_paths: str | None = None
+    discord_allowed_upload_url_hosts: str | None = None
+    discord_max_upload_bytes: int = Field(
+        default=DEFAULT_MAX_UPLOAD_BYTES,
+        gt=0,
+    )
+    discord_max_upload_total_bytes: int = Field(
+        default=DEFAULT_MAX_UPLOAD_TOTAL_BYTES,
+        gt=0,
+        le=25 * 1024 * 1024,
+    )
+    discord_allowed_upload_mime_types: str | None = None
 
     @property
     def default_guild_id(self) -> str | None:
@@ -59,6 +73,30 @@ class Settings(BaseSettings):
             for value in _parse_csv_values(
                 self.discord_allowed_attachment_mime_types
             )
+        }
+
+    @property
+    def allowed_upload_paths(self) -> tuple[str, ...]:
+        """Return configured filesystem roots allowed for outgoing files."""
+
+        return tuple(sorted(_parse_csv_values(self.discord_allowed_upload_paths)))
+
+    @property
+    def allowed_upload_url_hosts(self) -> set[str]:
+        """Return optional normalized hosts allowed for outgoing URL downloads."""
+
+        return {
+            value.lower()
+            for value in _parse_csv_values(self.discord_allowed_upload_url_hosts)
+        }
+
+    @property
+    def allowed_upload_mime_patterns(self) -> set[str]:
+        """Return optional normalized MIME patterns allowed for uploads."""
+
+        return {
+            value.lower()
+            for value in _parse_csv_values(self.discord_allowed_upload_mime_types)
         }
 
 

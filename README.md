@@ -4,7 +4,7 @@
 
 Discord MCP Bridge is a local MCP server that exposes Discord bot actions to AI coding clients such as Codex, Claude, Cursor, and other MCP-capable tools.
 
-It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, rich message and media inspection, secure attachment downloads, message search, sending and editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
+It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, rich message and media inspection, secure attachment downloads, message search, sending text, files, and stickers, editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
 It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
 
@@ -72,7 +72,7 @@ Contribution notes live in [CONTRIBUTING.md](CONTRIBUTING.md).
 - `discord_read_messages` is implemented.
 - `discord_download_attachment` is implemented with CDN, size, and MIME validation.
 - `discord_search_messages` is implemented.
-- `discord_send_message` is implemented.
+- `discord_send_message` supports text-only, media-only, and combined messages using local files, public HTTPS URLs, base64 data, and native sticker IDs.
 - `discord_edit_own_message` is implemented.
 - `discord_create_thread` is implemented.
 - `discord_add_reaction` is implemented.
@@ -154,6 +154,9 @@ Minimum Discord permissions:
 - `View Channels`
 - `Read Message History` for reading messages and search
 - `Send Messages` for sending messages
+- `Attach Files` for uploading images, GIFs, audio, video, documents, and other files
+- `Embed Links` for automatic previews of links such as Tenor or Giphy share pages
+- `Use External Stickers` when sending stickers from outside the target server
 - `Create Public Threads` for creating public threads
 - `Add Reactions` for adding reactions
 
@@ -177,6 +180,11 @@ DISCORD_APPEND_ATTRIBUTION=true
 DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
 DISCORD_MAX_ATTACHMENT_BYTES=10485760
 DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=
+DISCORD_ALLOWED_UPLOAD_PATHS=
+DISCORD_ALLOWED_UPLOAD_URL_HOSTS=
+DISCORD_MAX_UPLOAD_BYTES=10485760
+DISCORD_MAX_UPLOAD_TOTAL_BYTES=25165824
+DISCORD_ALLOWED_UPLOAD_MIME_TYPES=
 ```
 
 Minimum configuration:
@@ -206,6 +214,10 @@ Behavior notes:
 - Set `DISCORD_ATTRIBUTION_TEXT` to a blank value to restore the legacy `sent via MCP by ...` footer from `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID`.
 - `DISCORD_MAX_ATTACHMENT_BYTES` is the server-side attachment download ceiling; the default is 10 MiB. A tool caller can request a smaller per-call `max_bytes`, but cannot raise this ceiling.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` optionally restricts downloads with comma-separated exact MIME types or wildcards, for example `image/*,application/pdf`. When unset, any syntactically valid MIME type is accepted.
+- `DISCORD_ALLOWED_UPLOAD_PATHS` is a comma-separated list of absolute directory roots. Local path uploads are disabled when it is unset. Resolved files, including symlink targets, must remain inside one of these roots.
+- `DISCORD_ALLOWED_UPLOAD_URL_HOSTS` optionally limits public HTTPS media downloads to exact hostnames. When unset, any host that resolves exclusively to public addresses is allowed.
+- `DISCORD_MAX_UPLOAD_BYTES` limits each outgoing file and defaults to 10 MiB. `DISCORD_MAX_UPLOAD_TOTAL_BYTES` limits all files in one message and defaults to 24 MiB to stay below Discord's 25 MiB request ceiling.
+- `DISCORD_ALLOWED_UPLOAD_MIME_TYPES` optionally restricts outgoing files using exact MIME types or wildcards such as `image/*,audio/*,application/pdf`. When unset, any file type accepted by Discord is allowed.
 
 Discord setup notes:
 
@@ -509,13 +521,83 @@ Current behavior:
 Inputs:
 
 - `channel_id`: Discord channel ID.
-- `content`: message content.
+- `content`: optional message content.
+- `attachments`: optional list of up to 10 discriminated attachment objects.
+- `sticker_ids`: optional list of up to 3 unique native Discord sticker IDs.
+
+Each attachment sets `source_type` to one of:
+
+- `path`: requires an absolute `path` under `DISCORD_ALLOWED_UPLOAD_PATHS`.
+- `url`: requires a direct public HTTPS file URL. Redirects are limited and revalidated.
+- `base64`: requires strict `data_base64` and an explicit `filename`.
+
+All attachment types accept optional `filename`, `content_type`, `description`, and `spoiler`. A description can contain up to 1024 characters. Base64 attachments always require `filename`.
 
 Current behavior:
 
-- Sends a message to the requested channel with the configured bot token.
-- Returns a structured result with `status`, `message_id`, `channel_id`, `content`, and `author_username`.
-- Rejects missing config and blocked channels/guilds before sending.
+- Sends text-only, media-only, sticker-only, or combined messages with the configured bot token.
+- Supports images, animated GIF files, audio, video, PDF, archives, and generic documents as ordinary Discord attachments.
+- Downloads URL attachments through a separate unauthenticated client, so the Discord bot token is never forwarded to media hosts.
+- Keeps configured actor/brand attribution even when the caller omits content. Traditional Discord attachments render after the complete text block, so the attribution appears before media.
+- Returns `status`, `message_id`, `channel_id`, `content`, `author_username`, `attachments`, and `stickers`.
+- Rejects empty messages, unsafe sources, invalid MIME combinations, excess files/stickers, oversized requests, missing config, and blocked channels/guilds before sending.
+
+Text-only example:
+
+```json
+{
+  "channel_id": "123456789012345678",
+  "content": "Deployment completed"
+}
+```
+
+Text with a local image:
+
+```json
+{
+  "channel_id": "123456789012345678",
+  "content": "Latest screenshot",
+  "attachments": [
+    {
+      "source_type": "path",
+      "path": "/absolute/allowed/path/screenshot.png",
+      "description": "Application dashboard after deployment"
+    }
+  ]
+}
+```
+
+Media-only URL and base64 inputs:
+
+```json
+{
+  "channel_id": "123456789012345678",
+  "attachments": [
+    {
+      "source_type": "url",
+      "url": "https://cdn.example.com/demo.gif",
+      "spoiler": true
+    },
+    {
+      "source_type": "base64",
+      "data_base64": "JVBERi0xLjQK...",
+      "filename": "report.pdf",
+      "content_type": "application/pdf"
+    }
+  ]
+}
+```
+
+Native sticker-only example:
+
+```json
+{
+  "channel_id": "123456789012345678",
+  "sticker_ids": ["987654321098765432"]
+}
+```
+
+Native stickers require IDs available to the bot. An arbitrary sticker-like image should be sent as an image attachment. Tenor and Giphy share-page URLs should be included in `content` so Discord can unfurl them; `source_type=url` is reserved for URLs that return file bytes rather than HTML.
 
 ### `discord_edit_own_message`
 

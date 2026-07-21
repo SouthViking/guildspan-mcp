@@ -1,9 +1,15 @@
+from collections.abc import Sequence
 from typing import Any, cast
 
 import pytest
 
 from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage, DiscordThread
+from discord_mcp_bridge.discord_client import (
+    DiscordChannel,
+    DiscordMessage,
+    DiscordThread,
+    DiscordUpload,
+)
 from discord_mcp_bridge.errors import DiscordConfigurationError
 from discord_mcp_bridge.tools.search import _discord_search_messages
 
@@ -107,7 +113,14 @@ class FakeDiscordClient:
         messages = sorted(messages, key=lambda message: int(cast(str, message["id"])), reverse=True)
         return messages[:limit]
 
-    async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
+    async def send_message(
+        self,
+        *,
+        channel_id: str,
+        content: str | None,
+        attachments: Sequence[DiscordUpload] = (),
+        sticker_ids: Sequence[str] = (),
+    ) -> DiscordMessage:
         raise AssertionError("send_message should not be called by discord_search_messages")
 
     async def edit_message(

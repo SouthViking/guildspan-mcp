@@ -1,9 +1,15 @@
+from collections.abc import Sequence
 from typing import Any, cast
 
 import pytest
 
 from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordChannel, DiscordMessage, DiscordThread
+from discord_mcp_bridge.discord_client import (
+    DiscordChannel,
+    DiscordMessage,
+    DiscordThread,
+    DiscordUpload,
+)
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
 from discord_mcp_bridge.tools.reactions import _discord_add_reaction
 
@@ -41,7 +47,14 @@ class FakeDiscordClient:
     ) -> list[dict[str, object]]:
         raise AssertionError("list_channel_messages should not be called by discord_add_reaction")
 
-    async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
+    async def send_message(
+        self,
+        *,
+        channel_id: str,
+        content: str | None,
+        attachments: Sequence[DiscordUpload] = (),
+        sticker_ids: Sequence[str] = (),
+    ) -> DiscordMessage:
         raise AssertionError("send_message should not be called by discord_add_reaction")
 
     async def edit_message(

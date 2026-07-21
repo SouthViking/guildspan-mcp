@@ -32,3 +32,17 @@ async def test_create_server_registers_discord_send_message_tool() -> None:
         "discord_create_thread",
         "discord_add_reaction",
     ]
+
+    send_tool = next(tool for tool in tools if tool.name == "discord_send_message")
+    properties = send_tool.parameters["properties"]
+    assert set(properties) == {
+        "channel_id",
+        "content",
+        "attachments",
+        "sticker_ids",
+    }
+    attachment_array = properties["attachments"]["anyOf"][0]
+    source_variants = attachment_array["items"]["oneOf"]
+    assert {
+        variant["properties"]["source_type"]["const"] for variant in source_variants
+    } == {"path", "url", "base64"}

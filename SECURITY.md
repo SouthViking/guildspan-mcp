@@ -30,3 +30,13 @@ Please report security issues privately before opening a public issue. If GitHub
 - CDN requests use a separate HTTP client that never receives the Discord bot authorization header.
 - The response is streamed with a default 10 MiB maximum configured through `DISCORD_MAX_ATTACHMENT_BYTES`.
 - Set `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` to an exact or wildcard MIME allowlist when the MCP client should only receive selected file types.
+
+## Attachment Uploads
+
+- Local path uploads are disabled until `DISCORD_ALLOWED_UPLOAD_PATHS` lists one or more absolute directory roots.
+- Paths are resolved before access. Regular files and symlink targets must remain inside a configured root.
+- Public URL uploads require HTTPS without credentials or custom ports. Every host and redirect destination must resolve only to public addresses.
+- URL downloads run through a separate HTTP client without the Discord bot authorization header and are streamed under configured limits.
+- Base64 is decoded strictly, and all sources are checked against per-file and aggregate request ceilings before Discord receives them.
+- Use `DISCORD_ALLOWED_UPLOAD_URL_HOSTS` and `DISCORD_ALLOWED_UPLOAD_MIME_TYPES` to narrow outgoing sources and file types when operating in a sensitive environment.
+- Grant `ATTACH_FILES` only when file sending is needed, and remember that any allowed local file can be sent to any Discord channel permitted by the channel/guild policy.

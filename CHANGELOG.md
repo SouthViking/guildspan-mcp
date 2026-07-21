@@ -10,9 +10,12 @@ style sections and uses conventional commits for commit messages.
 ### Changed
 
 - Message attribution now places the configured actor above the message body and keeps the configurable `sent using Discord Bridge` brand footer below it.
+- `discord_send_message` now accepts optional text, attachments, and native sticker IDs for text-only, media-only, sticker-only, and combined messages.
 
 ### Added
 
+- Secure outgoing attachment sources for explicitly allowed local paths, public HTTPS URLs, and base64 data, with MIME, count, per-file, and aggregate limits.
+- Upload policy controls through `DISCORD_ALLOWED_UPLOAD_PATHS`, `DISCORD_ALLOWED_UPLOAD_URL_HOSTS`, `DISCORD_MAX_UPLOAD_BYTES`, `DISCORD_MAX_UPLOAD_TOTAL_BYTES`, and `DISCORD_ALLOWED_UPLOAD_MIME_TYPES`.
 - Rich message-history output for attachment details, embed images/thumbnails/videos, stickers, polls, and components.
 - `discord_download_attachment` for bounded, MIME-validated Discord CDN downloads returned as native MCP content.
 - Attachment download controls through `DISCORD_MAX_ATTACHMENT_BYTES` and `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES`.

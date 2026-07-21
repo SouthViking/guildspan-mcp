@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
-from typing import cast
+from typing import Sequence, cast
 from urllib.parse import quote
 
 import httpx
 
-from discord_mcp_bridge.errors import DiscordApiError
+from discord_mcp_bridge.errors import DiscordApiError, DiscordPermissionError
 
 DISCORD_API_BASE_URL = "https://discord.com/api/v10"
 
@@ -21,6 +22,18 @@ class DiscordMessage:
     channel_id: str
     content: str
     author_username: str
+    attachments: tuple[dict[str, object], ...] = ()
+    stickers: tuple[dict[str, object], ...] = ()
+
+
+@dataclass(frozen=True)
+class DiscordUpload:
+    """Validated outgoing file ready for Discord multipart upload."""
+
+    data: bytes
+    filename: str
+    content_type: str
+    description: str | None = None
 
 
 @dataclass(frozen=True)
@@ -60,7 +73,6 @@ class DiscordClient:
             base_url=base_url,
             headers={
                 "Authorization": f"Bot {bot_token}",
-                "Content-Type": "application/json",
                 "User-Agent": "discord-mcp-bridge/0.1.0",
             },
             timeout=timeout_seconds,
@@ -216,28 +228,70 @@ class DiscordClient:
         )
         return self._decode_response(response)
 
-    async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
+    async def send_message(
+        self,
+        *,
+        channel_id: str,
+        content: str | None,
+        attachments: Sequence[DiscordUpload] = (),
+        sticker_ids: Sequence[str] = (),
+    ) -> DiscordMessage:
         """Send a message to a Discord channel."""
 
-        response = await self._client.post(
-            f"/channels/{channel_id}/messages",
-            json={"content": content},
-        )
-        data = self._decode_response(response)
-        author_object = data.get("author", {})
-        if not isinstance(author_object, dict):
-            raise DiscordApiError("Discord response did not include a valid author object.")
-        author = cast(dict[str, object], author_object)
-        author_username = author.get("username")
-        if not isinstance(author_username, str):
-            raise DiscordApiError("Discord response did not include a valid author username.")
+        payload: dict[str, object] = {}
+        if content is not None:
+            payload["content"] = content
+        if sticker_ids:
+            payload["sticker_ids"] = list(sticker_ids)
 
-        return DiscordMessage(
-            id=str(data["id"]),
-            channel_id=str(data["channel_id"]),
-            content=str(data["content"]),
-            author_username=author_username,
-        )
+        if attachments:
+            attachment_metadata: list[dict[str, object]] = []
+            files: list[tuple[str, tuple[str, bytes, str]]] = []
+            for index, attachment in enumerate(attachments):
+                metadata: dict[str, object] = {
+                    "id": index,
+                    "filename": attachment.filename,
+                }
+                if attachment.description is not None:
+                    metadata["description"] = attachment.description
+                attachment_metadata.append(metadata)
+                files.append(
+                    (
+                        f"files[{index}]",
+                        (
+                            attachment.filename,
+                            attachment.data,
+                            attachment.content_type,
+                        ),
+                    )
+                )
+            payload["attachments"] = attachment_metadata
+            response = await self._client.post(
+                f"/channels/{channel_id}/messages",
+                data={"payload_json": json.dumps(payload, ensure_ascii=False)},
+                files=files,
+            )
+        else:
+            response = await self._client.post(
+                f"/channels/{channel_id}/messages",
+                json=payload,
+            )
+
+        if response.status_code == 403 and (attachments or sticker_ids):
+            requirements = ["SEND_MESSAGES"]
+            if attachments:
+                requirements.append("ATTACH_FILES")
+            if sticker_ids:
+                requirements.append(
+                    "access to the requested stickers (and USE_EXTERNAL_STICKERS "
+                    "when applicable)"
+                )
+            raise DiscordPermissionError(
+                "Discord rejected the message for missing permissions. Verify: "
+                + ", ".join(requirements)
+                + "."
+            )
+        return self._decode_message_response(response)
 
     async def edit_message(
         self,
@@ -317,11 +371,22 @@ class DiscordClient:
         if not isinstance(author_username, str):
             raise DiscordApiError("Discord response did not include a valid author username.")
 
+        attachments = self._as_object_tuple(
+            data.get("attachments"),
+            field_name="attachments",
+        )
+        stickers = self._as_object_tuple(
+            data.get("sticker_items"),
+            field_name="sticker_items",
+        )
+
         return DiscordMessage(
             id=str(data["id"]),
             channel_id=str(data["channel_id"]),
             content=str(data["content"]),
             author_username=author_username,
+            attachments=attachments,
+            stickers=stickers,
         )
 
     def _decode_response(self, response: httpx.Response) -> dict[str, object]:
@@ -385,3 +450,24 @@ class DiscordClient:
         if isinstance(value, int):
             return value
         return None
+
+    def _as_object_tuple(
+        self,
+        value: object,
+        *,
+        field_name: str,
+    ) -> tuple[dict[str, object], ...]:
+        if value is None:
+            return ()
+        if not isinstance(value, list):
+            raise DiscordApiError(
+                f"Discord response did not include a valid {field_name} array."
+            )
+        items: list[dict[str, object]] = []
+        for item in value:
+            if not isinstance(item, dict):
+                raise DiscordApiError(
+                    f"Discord response {field_name} item was not a JSON object."
+                )
+            items.append(cast(dict[str, object], item))
+        return tuple(items)

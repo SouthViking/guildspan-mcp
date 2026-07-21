@@ -16,6 +16,11 @@ def test_settings_can_be_constructed_without_discord_token() -> None:
     assert settings.discord_attribution_text == "sent using Discord Bridge"
     assert settings.discord_max_attachment_bytes == 10 * 1024 * 1024
     assert settings.allowed_attachment_mime_patterns == set()
+    assert settings.allowed_upload_paths == ()
+    assert settings.allowed_upload_url_hosts == set()
+    assert settings.discord_max_upload_bytes == 10 * 1024 * 1024
+    assert settings.discord_max_upload_total_bytes == 24 * 1024 * 1024
+    assert settings.allowed_upload_mime_patterns == set()
 
 
 def test_load_settings_returns_settings() -> None:
@@ -45,3 +50,22 @@ def test_settings_parse_attachment_mime_patterns() -> None:
         "image/*",
         "application/pdf",
     }
+
+
+def test_settings_parse_upload_controls() -> None:
+    settings = make_settings(
+        discord_allowed_upload_paths=" /tmp/media, /opt/files ,,",
+        discord_allowed_upload_url_hosts=" CDN.EXAMPLE.COM, files.example.com ",
+        discord_max_upload_bytes=2048,
+        discord_max_upload_total_bytes=4096,
+        discord_allowed_upload_mime_types=" image/*, AUDIO/* ,,",
+    )
+
+    assert settings.allowed_upload_paths == ("/opt/files", "/tmp/media")
+    assert settings.allowed_upload_url_hosts == {
+        "cdn.example.com",
+        "files.example.com",
+    }
+    assert settings.discord_max_upload_bytes == 2048
+    assert settings.discord_max_upload_total_bytes == 4096
+    assert settings.allowed_upload_mime_patterns == {"image/*", "audio/*"}

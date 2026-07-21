@@ -19,3 +19,7 @@ class DiscordApiError(DiscordMcpBridgeError):
 
 class DiscordAttachmentError(DiscordMcpBridgeError):
     """Raised when a Discord attachment cannot be safely downloaded."""
+
+
+class DiscordUploadError(DiscordMcpBridgeError):
+    """Raised when an outgoing attachment cannot be safely prepared."""

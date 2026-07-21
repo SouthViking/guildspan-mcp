@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Protocol, Sequence
 
 from discord_mcp_bridge.config import Settings, load_settings
 from discord_mcp_bridge.discord_client import (
@@ -10,6 +10,7 @@ from discord_mcp_bridge.discord_client import (
     DiscordClient,
     DiscordMessage,
     DiscordThread,
+    DiscordUpload,
 )
 from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
 
@@ -38,7 +39,14 @@ class DiscordClientProtocol(ChannelAccessClientProtocol, Protocol):
     ) -> list[dict[str, object]]:
         """List messages visible to the bot in a channel."""
 
-    async def send_message(self, *, channel_id: str, content: str) -> DiscordMessage:
+    async def send_message(
+        self,
+        *,
+        channel_id: str,
+        content: str | None,
+        attachments: Sequence[DiscordUpload] = (),
+        sticker_ids: Sequence[str] = (),
+    ) -> DiscordMessage:
         """Send a message."""
 
     async def edit_message(

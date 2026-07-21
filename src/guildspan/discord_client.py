@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence, cast
+from typing import cast
 from urllib.parse import quote
 
 import httpx
@@ -116,11 +117,15 @@ class DiscordClient:
         channels: list[DiscordChannel] = []
         for item in payload:
             if not isinstance(item, dict):
-                raise DiscordApiError("Discord channel payload item was not a JSON object.")
+                raise DiscordApiError(
+                    "Discord channel payload item was not a JSON object."
+                )
             typed_item = cast(dict[str, object], item)
             channel_id = typed_item.get("id")
             if not isinstance(channel_id, (str, int)):
-                raise DiscordApiError("Discord channel payload did not include a valid id.")
+                raise DiscordApiError(
+                    "Discord channel payload did not include a valid id."
+                )
             channels.append(
                 DiscordChannel(
                     id=str(channel_id),
@@ -212,7 +217,9 @@ class DiscordClient:
         messages: list[dict[str, object]] = []
         for item in payload:
             if not isinstance(item, dict):
-                raise DiscordApiError("Discord message payload item was not a JSON object.")
+                raise DiscordApiError(
+                    "Discord message payload item was not a JSON object."
+                )
             messages.append(cast(dict[str, object], item))
         return messages
 
@@ -366,11 +373,15 @@ class DiscordClient:
         data = self._decode_response(response)
         author_object = data.get("author", {})
         if not isinstance(author_object, dict):
-            raise DiscordApiError("Discord response did not include a valid author object.")
+            raise DiscordApiError(
+                "Discord response did not include a valid author object."
+            )
         author = cast(dict[str, object], author_object)
         author_username = author.get("username")
         if not isinstance(author_username, str):
-            raise DiscordApiError("Discord response did not include a valid author username.")
+            raise DiscordApiError(
+                "Discord response did not include a valid author username."
+            )
 
         attachments = self._as_object_tuple(
             data.get("attachments"),

@@ -108,7 +108,9 @@ class FakeDiscordPeopleClient:
 
 @pytest.mark.asyncio
 async def test_discord_get_current_bot_user_requires_token() -> None:
-    with pytest.raises(DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"):
+    with pytest.raises(
+        DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"
+    ):
         await _discord_get_current_bot_user(
             settings=make_settings(discord_bot_token=None),
         )

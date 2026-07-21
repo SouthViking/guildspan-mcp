@@ -1,5 +1,6 @@
 import pytest
 
+from guildspan import server as server_module
 from guildspan.server import create_server
 
 
@@ -7,6 +8,20 @@ def test_create_server_returns_fastmcp_instance() -> None:
     server = create_server()
 
     assert server.name == "GuildSpan"
+
+
+def test_main_runs_the_configured_server(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str] = []
+
+    class RecordingServer:
+        def run(self) -> None:
+            calls.append("run")
+
+    monkeypatch.setattr(server_module, "create_server", RecordingServer)
+
+    server_module.main()
+
+    assert calls == ["run"]
 
 
 @pytest.mark.asyncio

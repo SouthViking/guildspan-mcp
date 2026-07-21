@@ -244,7 +244,9 @@ async def _fetch_matching_messages(
             if message_id is not None:
                 last_inspected_message_id = message_id
             scanned_count += 1
-            if after is not None and not _snowflake_is_greater(_str_field(message, "id"), after):
+            if after is not None and not _snowflake_is_greater(
+                _str_field(message, "id"), after
+            ):
                 continue
             if _message_matches(
                 message,
@@ -304,7 +306,10 @@ def _message_matches(
                 return False
         elif contains.lower() not in content.lower():
             return False
-    if has_attachments is not None and _has_list_items(message, "attachments") is not has_attachments:
+    if (
+        has_attachments is not None
+        and _has_list_items(message, "attachments") is not has_attachments
+    ):
         return False
     if has_embeds is not None and _has_list_items(message, "embeds") is not has_embeds:
         return False
@@ -312,9 +317,7 @@ def _message_matches(
         return False
     if mentions_user_id is not None and not _mentions_user(message, mentions_user_id):
         return False
-    if message_type is not None and _int_field(message, "type") != message_type:
-        return False
-    return True
+    return message_type is None or _int_field(message, "type") == message_type
 
 
 def _summarize_message(
@@ -353,8 +356,7 @@ def _summarize_message(
         ]
     if include_embeds:
         summary["embeds"] = [
-            _summarize_embed(item)
-            for item in _dict_list_field(message, "embeds")
+            _summarize_embed(item) for item in _dict_list_field(message, "embeds")
         ]
     if include_stickers:
         summary["stickers"] = [
@@ -371,13 +373,11 @@ def _summarize_message(
         ]
     if include_reactions:
         summary["reactions"] = [
-            _summarize_reaction(item)
-            for item in _dict_list_field(message, "reactions")
+            _summarize_reaction(item) for item in _dict_list_field(message, "reactions")
         ]
     if include_mentions:
         summary["mentions"] = [
-            _summarize_user(item)
-            for item in _dict_list_field(message, "mentions")
+            _summarize_user(item) for item in _dict_list_field(message, "mentions")
         ]
         summary["mention_roles"] = _str_list_field(message, "mention_roles")
     if include_referenced_message:
@@ -402,22 +402,18 @@ def _summarize_referenced_message(
         "author": _summarize_user(_dict_field(message, "author")),
     }
     summary["attachments"] = [
-        _summarize_attachment(item)
-        for item in _dict_list_field(message, "attachments")
+        _summarize_attachment(item) for item in _dict_list_field(message, "attachments")
     ]
     summary["embeds"] = [
-        _summarize_embed(item)
-        for item in _dict_list_field(message, "embeds")
+        _summarize_embed(item) for item in _dict_list_field(message, "embeds")
     ]
     summary["stickers"] = [
-        _summarize_sticker(item)
-        for item in _dict_list_field(message, "sticker_items")
+        _summarize_sticker(item) for item in _dict_list_field(message, "sticker_items")
     ]
     poll = _dict_field(message, "poll")
     summary["poll"] = _summarize_poll(poll) if poll is not None else None
     summary["components"] = [
-        _copy_discord_object(item)
-        for item in _dict_list_field(message, "components")
+        _copy_discord_object(item) for item in _dict_list_field(message, "components")
     ]
     return summary
 
@@ -596,7 +592,10 @@ def _summarize_message_reference(
 
 
 def _mentions_user(message: dict[str, object], user_id: str) -> bool:
-    return any(_str_field(user, "id") == user_id for user in _dict_list_field(message, "mentions"))
+    return any(
+        _str_field(user, "id") == user_id
+        for user in _dict_list_field(message, "mentions")
+    )
 
 
 def _has_list_items(source: dict[str, object], key: str) -> bool:

@@ -12,8 +12,8 @@ from guildspan.discord_client import (
     DiscordUpload,
 )
 from guildspan.errors import DiscordConfigurationError, DiscordPermissionError
-from guildspan.tools import messages as messages_module
 from guildspan.tools import _common as common_module
+from guildspan.tools import messages as messages_module
 from guildspan.tools.messages import (
     _discord_edit_own_message,
     _discord_send_message,
@@ -62,7 +62,9 @@ class FakeDiscordClient:
         )
 
     async def list_guild_channels(self, guild_id: str) -> list[DiscordChannel]:
-        raise AssertionError("list_guild_channels should not be called by discord_send_message")
+        raise AssertionError(
+            "list_guild_channels should not be called by discord_send_message"
+        )
 
     async def list_channel_messages(
         self,
@@ -73,7 +75,9 @@ class FakeDiscordClient:
         after: str | None = None,
         around: str | None = None,
     ) -> list[dict[str, object]]:
-        raise AssertionError("list_channel_messages should not be called by discord_send_message")
+        raise AssertionError(
+            "list_channel_messages should not be called by discord_send_message"
+        )
 
     async def send_message(
         self,
@@ -115,7 +119,9 @@ class FakeDiscordClient:
         message_id: str,
         content: str,
     ) -> DiscordMessage:
-        raise AssertionError("edit_message should not be called by discord_send_message")
+        raise AssertionError(
+            "edit_message should not be called by discord_send_message"
+        )
 
     async def add_reaction(
         self,
@@ -124,7 +130,9 @@ class FakeDiscordClient:
         message_id: str,
         emoji: str,
     ) -> None:
-        raise AssertionError("add_reaction should not be called by discord_send_message")
+        raise AssertionError(
+            "add_reaction should not be called by discord_send_message"
+        )
 
     async def create_thread(
         self,
@@ -134,7 +142,9 @@ class FakeDiscordClient:
         message_id: str | None = None,
         auto_archive_duration: int = 1440,
     ) -> DiscordThread:
-        raise AssertionError("create_thread should not be called by discord_send_message")
+        raise AssertionError(
+            "create_thread should not be called by discord_send_message"
+        )
 
     async def aclose(self) -> None:
         self.closed = True
@@ -163,7 +173,9 @@ class EditingDiscordClient(FakeDiscordClient):
 
 @pytest.mark.asyncio
 async def test_discord_send_message_rejects_missing_bot_token() -> None:
-    with pytest.raises(DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"):
+    with pytest.raises(
+        DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"
+    ):
         await _discord_send_message(
             channel_id="1234567890",
             content="hello",

@@ -29,9 +29,7 @@ from guildspan.errors import (
 
 MAX_OUTGOING_ATTACHMENTS = 10
 MAX_REDIRECTS = 3
-MIME_TYPE_RE = re.compile(
-    r"^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$"
-)
+MIME_TYPE_RE = re.compile(r"^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$")
 MIME_PATTERN_RE = re.compile(
     r"^(?:\*/\*|[a-z0-9][a-z0-9!#$&^_.+-]*/(?:\*|[a-z0-9][a-z0-9!#$&^_.+-]*))$"
 )
@@ -208,9 +206,7 @@ class UploadUrlDownloader:
                         final_url=str(response.url),
                     )
             except httpx.HTTPError as exc:
-                raise DiscordUploadError(
-                    f"Upload URL download failed: {exc}"
-                ) from exc
+                raise DiscordUploadError(f"Upload URL download failed: {exc}") from exc
 
         raise AssertionError("redirect loop must return or raise")
 
@@ -239,9 +235,7 @@ async def resolve_outgoing_attachments(
     _validate_mime_patterns(mime_patterns)
     needs_downloader = any(isinstance(item, UrlAttachment) for item in attachments)
     managed_downloader = downloader is None and needs_downloader
-    url_downloader = downloader or (
-        UploadUrlDownloader() if needs_downloader else None
-    )
+    url_downloader = downloader or (UploadUrlDownloader() if needs_downloader else None)
     resolved: list[DiscordUpload] = []
     used_filenames: set[str] = set()
     total_bytes = 0
@@ -290,9 +284,8 @@ async def resolve_outgoing_attachments(
             requested_name = attachment.filename or inferred_name
             filename = _unique_filename(
                 _sanitize_filename(
-                    requested_name or _fallback_filename(
-                        attachment.content_type or response_mime
-                    ),
+                    requested_name
+                    or _fallback_filename(attachment.content_type or response_mime),
                     spoiler=attachment.spoiler,
                 ),
                 used=used_filenames,
@@ -343,9 +336,7 @@ async def _load_path_attachment(
     try:
         resolved_path = path.resolve(strict=True)
     except OSError as exc:
-        raise DiscordUploadError(
-            f"Attachment path is not accessible: {path}."
-        ) from exc
+        raise DiscordUploadError(f"Attachment path is not accessible: {path}.") from exc
     if not any(resolved_path.is_relative_to(root) for root in allowed_roots):
         raise DiscordPermissionError(
             f"Attachment path {resolved_path} is outside DISCORD_ALLOWED_UPLOAD_PATHS."
@@ -453,8 +444,7 @@ def _decode_base64_attachment(value: str, *, max_bytes: int) -> bytes:
         raise DiscordUploadError("data_base64 is not valid base64.") from exc
     if len(data) > max_bytes:
         raise DiscordUploadError(
-            f"Base64 attachment is {len(data)} bytes; the maximum is "
-            f"{max_bytes} bytes."
+            f"Base64 attachment is {len(data)} bytes; the maximum is {max_bytes} bytes."
         )
     return data
 
@@ -467,7 +457,9 @@ def _filename_from_url(url: str) -> str | None:
 
 def _fallback_filename(content_type: str | None) -> str:
     normalized = _normalize_mime_type(content_type, source="Attachment content_type")
-    extension = mimetypes.guess_extension(normalized) if normalized is not None else None
+    extension = (
+        mimetypes.guess_extension(normalized) if normalized is not None else None
+    )
     return f"attachment{extension or ''}"
 
 

@@ -7,9 +7,9 @@ from guildspan.tools._common import (
     DiscordClientProtocol,
     assert_channel_is_allowed,
     build_client,
+    require_bot_token,
     required_id,
     required_text,
-    require_bot_token,
     resolve_settings,
 )
 

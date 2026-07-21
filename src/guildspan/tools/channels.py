@@ -5,12 +5,12 @@ from __future__ import annotations
 from guildspan.config import Settings
 from guildspan.tools._common import (
     DiscordClientProtocol,
-    assert_guild_is_allowed,
     assert_channel_is_allowed,
+    assert_guild_is_allowed,
     build_client,
     filter_allowed_channels,
-    required_id,
     require_bot_token,
+    required_id,
     resolve_settings,
 )
 
@@ -70,7 +70,9 @@ async def _discord_list_channels(
     client: DiscordClientProtocol | None = None,
 ) -> dict[str, object]:
     resolved_settings = resolve_settings(settings)
-    normalized_guild_id = _resolve_guild_id(guild_id=guild_id, settings=resolved_settings)
+    normalized_guild_id = _resolve_guild_id(
+        guild_id=guild_id, settings=resolved_settings
+    )
     bot_token = require_bot_token(resolved_settings)
     assert_guild_is_allowed(guild_id=normalized_guild_id, settings=resolved_settings)
 
@@ -83,7 +85,9 @@ async def _discord_list_channels(
         if managed_client:
             await discord_client.aclose()
 
-    filtered_channels = filter_allowed_channels(channels=channels, settings=resolved_settings)
+    filtered_channels = filter_allowed_channels(
+        channels=channels, settings=resolved_settings
+    )
     sorted_channels = sorted(
         filtered_channels,
         key=lambda channel: (

@@ -70,9 +70,7 @@ class Settings(BaseSettings):
 
         return {
             value.lower()
-            for value in _parse_csv_values(
-                self.discord_allowed_attachment_mime_types
-            )
+            for value in _parse_csv_values(self.discord_allowed_attachment_mime_types)
         }
 
     @property

@@ -39,7 +39,9 @@ async def _discord_health_check(
     client: DiscordClientProtocol | None = None,
 ) -> dict[str, object]:
     resolved_settings = resolve_settings(settings)
-    normalized_guild_id = _resolve_optional_guild_id(guild_id=guild_id, settings=resolved_settings)
+    normalized_guild_id = _resolve_optional_guild_id(
+        guild_id=guild_id, settings=resolved_settings
+    )
     normalized_channel_id = optional_id(channel_id)
     checks: list[dict[str, object]] = []
 
@@ -64,13 +66,17 @@ async def _discord_health_check(
                     guild_id=normalized_guild_id,
                     settings=resolved_settings,
                 )
-                checks.append(_ok_check("guild_policy", "Guild is allowed by local policy."))
+                checks.append(
+                    _ok_check("guild_policy", "Guild is allowed by local policy.")
+                )
             except GuildSpanError as error:
                 checks.append(_failed_check("guild_policy", str(error)))
 
             if include_channel_sample:
                 try:
-                    channels = await discord_client.list_guild_channels(normalized_guild_id)
+                    channels = await discord_client.list_guild_channels(
+                        normalized_guild_id
+                    )
                     filtered_channels = filter_allowed_channels(
                         channels=channels,
                         settings=resolved_settings,
@@ -121,7 +127,9 @@ async def _discord_health_check(
     )
 
 
-def _resolve_optional_guild_id(*, guild_id: str | None, settings: Settings) -> str | None:
+def _resolve_optional_guild_id(
+    *, guild_id: str | None, settings: Settings
+) -> str | None:
     if guild_id is not None and guild_id.strip():
         return guild_id.strip()
     return settings.default_guild_id

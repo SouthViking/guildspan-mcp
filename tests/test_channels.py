@@ -63,7 +63,9 @@ class FakeDiscordClient:
         after: str | None = None,
         around: str | None = None,
     ) -> list[dict[str, object]]:
-        raise AssertionError("list_channel_messages should not be called by discord_list_channels")
+        raise AssertionError(
+            "list_channel_messages should not be called by discord_list_channels"
+        )
 
     async def send_message(
         self,
@@ -73,7 +75,9 @@ class FakeDiscordClient:
         attachments: Sequence[DiscordUpload] = (),
         sticker_ids: Sequence[str] = (),
     ) -> DiscordMessage:
-        raise AssertionError("send_message should not be called by discord_list_channels")
+        raise AssertionError(
+            "send_message should not be called by discord_list_channels"
+        )
 
     async def edit_message(
         self,
@@ -82,7 +86,9 @@ class FakeDiscordClient:
         message_id: str,
         content: str,
     ) -> DiscordMessage:
-        raise AssertionError("edit_message should not be called by discord_list_channels")
+        raise AssertionError(
+            "edit_message should not be called by discord_list_channels"
+        )
 
     async def add_reaction(
         self,
@@ -91,7 +97,9 @@ class FakeDiscordClient:
         message_id: str,
         emoji: str,
     ) -> None:
-        raise AssertionError("add_reaction should not be called by discord_list_channels")
+        raise AssertionError(
+            "add_reaction should not be called by discord_list_channels"
+        )
 
     async def create_thread(
         self,
@@ -101,7 +109,9 @@ class FakeDiscordClient:
         message_id: str | None = None,
         auto_archive_duration: int = 1440,
     ) -> DiscordThread:
-        raise AssertionError("create_thread should not be called by discord_list_channels")
+        raise AssertionError(
+            "create_thread should not be called by discord_list_channels"
+        )
 
     async def aclose(self) -> None:
         self.closed = True
@@ -109,7 +119,9 @@ class FakeDiscordClient:
 
 @pytest.mark.asyncio
 async def test_discord_list_channels_requires_bot_token() -> None:
-    with pytest.raises(DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"):
+    with pytest.raises(
+        DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"
+    ):
         await _discord_list_channels(
             guild_id="guild-1",
             settings=make_settings(discord_bot_token=None),

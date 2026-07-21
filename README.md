@@ -10,6 +10,33 @@ It is not a hosted service or marketplace plugin. It is a local MCP server that 
 
 GuildSpan is an independent open-source project and is not affiliated with or endorsed by Discord.
 
+## Five-minute Quickstart
+
+You need Python 3.11 or newer, an MCP-capable client, and permission to install a bot in a Discord server.
+
+1. Create a Discord application and bot, copy its bot token, enable the Message Content intent, and install it in your server with only the permissions you need. Follow the [Discord bot setup guide](docs/discord-setup.md) for the exact settings.
+2. Clone and install GuildSpan:
+
+   ```bash
+   git clone https://github.com/SouthViking/guildspan-mcp.git
+   cd guildspan-mcp
+   python -m venv .venv
+   .venv/bin/python -m pip install -e .
+   ```
+
+   On Windows PowerShell, replace the last two commands with:
+
+   ```powershell
+   py -3.11 -m venv .venv
+   .venv\Scripts\python -m pip install -e .
+   ```
+
+3. Register the absolute `guildspan` executable path in [Codex](#codex), [Cursor](#cursor), or [Claude Desktop](#claude-desktop), and place `DISCORD_BOT_TOKEN` in that client's MCP `env` block.
+4. Restart or reload the client. Start a new session if the tool list was cached.
+5. Call `discord_health_check`, then `discord_list_channels` against a server the bot can access.
+
+If startup, permissions, message content, or media handling fails, use the [troubleshooting guide](docs/troubleshooting.md).
+
 ## AI Client Quickstart
 
 If you are connecting this repo from an AI editor or assistant, treat it as a **local MCP server project**.
@@ -51,14 +78,16 @@ CI runs automatically on:
 
 CI verifies:
 
-- package installation with development dependencies
-- `pytest`
-- `mypy`
-- Python package build artifacts
+- tests across Python 3.11 through 3.14
+- strict `mypy` checks
+- Ruff linting and formatting
+- branch coverage with a non-regression threshold
+- wheel and source distribution metadata and contents
 
 The changelog lives in [CHANGELOG.md](CHANGELOG.md).
 Security guidance lives in [SECURITY.md](SECURITY.md).
 Contribution notes live in [CONTRIBUTING.md](CONTRIBUTING.md).
+Discord setup lives in [docs/discord-setup.md](docs/discord-setup.md).
 
 ## Current Status
 
@@ -102,8 +131,11 @@ With `uv`:
 
 ```bash
 uv sync --extra dev
-uv run pytest
-uv run mypy
+uv run ruff check src tests
+uv run ruff format --check src tests
+uv run pytest --cov=guildspan --cov-branch --cov-report=term-missing
+uv run mypy src tests
+uv run python -m build
 ```
 
 Without `uv`, on macOS/Linux:
@@ -111,8 +143,11 @@ Without `uv`, on macOS/Linux:
 ```bash
 python -m venv .venv
 .venv/bin/python -m pip install -e ".[dev]"
-.venv/bin/python -m pytest
+.venv/bin/python -m ruff check src tests
+.venv/bin/python -m ruff format --check src tests
+.venv/bin/python -m pytest --cov=guildspan --cov-branch --cov-report=term-missing
 .venv/bin/python -m mypy
+.venv/bin/python -m build
 ```
 
 Without `uv`, on Windows PowerShell:
@@ -120,8 +155,11 @@ Without `uv`, on Windows PowerShell:
 ```powershell
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev]"
-.venv\Scripts\python -m pytest
+.venv\Scripts\python -m ruff check src tests
+.venv\Scripts\python -m ruff format --check src tests
+.venv\Scripts\python -m pytest --cov=guildspan --cov-branch --cov-report=term-missing
 .venv\Scripts\python -m mypy
+.venv\Scripts\python -m build
 ```
 
 For a runtime-only install, `pip install -e .` is enough. Use `pip install -e ".[dev]"` when you also want tests and type checks.
@@ -129,8 +167,12 @@ For a runtime-only install, `pip install -e .` is enough. Use `pip install -e ".
 Before opening a pull request, run:
 
 ```bash
-.venv/bin/python -m pytest
+.venv/bin/python -m pre_commit run --all-files
+.venv/bin/python -m pytest --cov=guildspan --cov-branch --cov-report=term-missing
 .venv/bin/python -m mypy src tests
+.venv/bin/python -m build
+.venv/bin/python -m twine check dist/*
+.venv/bin/python -m check_wheel_contents dist/*.whl
 ```
 
 The MCP command works best after the editable install because it exposes the console script.
@@ -228,6 +270,8 @@ Discord setup notes:
 - `DISCORD_DEFAULT_GUILD_ID` is the Discord server ID.
 - `DISCORD_ALLOWED_CHANNELS` is a comma-separated list of channel IDs.
 - The Discord bot must be invited to the server and needs the permissions for the tools you intend to use.
+
+See [Discord bot setup](docs/discord-setup.md) for installation and permission steps, and [Troubleshooting](docs/troubleshooting.md) for common Discord and MCP errors.
 
 ## Installation Path
 

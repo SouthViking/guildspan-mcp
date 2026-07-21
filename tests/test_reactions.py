@@ -34,7 +34,9 @@ class FakeDiscordClient:
         )
 
     async def list_guild_channels(self, guild_id: str) -> list[DiscordChannel]:
-        raise AssertionError("list_guild_channels should not be called by discord_add_reaction")
+        raise AssertionError(
+            "list_guild_channels should not be called by discord_add_reaction"
+        )
 
     async def list_channel_messages(
         self,
@@ -45,7 +47,9 @@ class FakeDiscordClient:
         after: str | None = None,
         around: str | None = None,
     ) -> list[dict[str, object]]:
-        raise AssertionError("list_channel_messages should not be called by discord_add_reaction")
+        raise AssertionError(
+            "list_channel_messages should not be called by discord_add_reaction"
+        )
 
     async def send_message(
         self,
@@ -55,7 +59,9 @@ class FakeDiscordClient:
         attachments: Sequence[DiscordUpload] = (),
         sticker_ids: Sequence[str] = (),
     ) -> DiscordMessage:
-        raise AssertionError("send_message should not be called by discord_add_reaction")
+        raise AssertionError(
+            "send_message should not be called by discord_add_reaction"
+        )
 
     async def edit_message(
         self,
@@ -64,7 +70,9 @@ class FakeDiscordClient:
         message_id: str,
         content: str,
     ) -> DiscordMessage:
-        raise AssertionError("edit_message should not be called by discord_add_reaction")
+        raise AssertionError(
+            "edit_message should not be called by discord_add_reaction"
+        )
 
     async def add_reaction(
         self,
@@ -83,7 +91,9 @@ class FakeDiscordClient:
         message_id: str | None = None,
         auto_archive_duration: int = 1440,
     ) -> DiscordThread:
-        raise AssertionError("create_thread should not be called by discord_add_reaction")
+        raise AssertionError(
+            "create_thread should not be called by discord_add_reaction"
+        )
 
     async def aclose(self) -> None:
         self.closed = True
@@ -91,7 +101,9 @@ class FakeDiscordClient:
 
 @pytest.mark.asyncio
 async def test_discord_add_reaction_requires_bot_token() -> None:
-    with pytest.raises(DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"):
+    with pytest.raises(
+        DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"
+    ):
         await _discord_add_reaction(
             channel_id="channel-1",
             message_id="message-1",

@@ -51,7 +51,9 @@ class FakeDiscordClient:
         after: str | None = None,
         around: str | None = None,
     ) -> list[dict[str, object]]:
-        raise AssertionError("list_channel_messages should not be called by discord_health_check")
+        raise AssertionError(
+            "list_channel_messages should not be called by discord_health_check"
+        )
 
     async def send_message(
         self,
@@ -61,7 +63,9 @@ class FakeDiscordClient:
         attachments: Sequence[DiscordUpload] = (),
         sticker_ids: Sequence[str] = (),
     ) -> DiscordMessage:
-        raise AssertionError("send_message should not be called by discord_health_check")
+        raise AssertionError(
+            "send_message should not be called by discord_health_check"
+        )
 
     async def edit_message(
         self,
@@ -70,7 +74,9 @@ class FakeDiscordClient:
         message_id: str,
         content: str,
     ) -> DiscordMessage:
-        raise AssertionError("edit_message should not be called by discord_health_check")
+        raise AssertionError(
+            "edit_message should not be called by discord_health_check"
+        )
 
     async def add_reaction(
         self,
@@ -79,7 +85,9 @@ class FakeDiscordClient:
         message_id: str,
         emoji: str,
     ) -> None:
-        raise AssertionError("add_reaction should not be called by discord_health_check")
+        raise AssertionError(
+            "add_reaction should not be called by discord_health_check"
+        )
 
     async def create_thread(
         self,
@@ -89,7 +97,9 @@ class FakeDiscordClient:
         message_id: str | None = None,
         auto_archive_duration: int = 1440,
     ) -> DiscordThread:
-        raise AssertionError("create_thread should not be called by discord_health_check")
+        raise AssertionError(
+            "create_thread should not be called by discord_health_check"
+        )
 
     async def aclose(self) -> None:
         self.closed = True

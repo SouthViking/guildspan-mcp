@@ -69,15 +69,21 @@ class FakeDiscordClient:
             ),
         ]
         self.messages = [
-            make_message(message_id="104", channel_id="channel-2", content="deploy done"),
+            make_message(
+                message_id="104", channel_id="channel-2", content="deploy done"
+            ),
             make_message(
                 message_id="103",
                 channel_id="channel-2",
                 content="deploy screenshot",
                 attachments=[{"id": "attachment-1", "filename": "shot.png"}],
             ),
-            make_message(message_id="102", channel_id="channel-1", content="standup notes"),
-            make_message(message_id="101", channel_id="channel-1", content="deploy failed"),
+            make_message(
+                message_id="102", channel_id="channel-1", content="standup notes"
+            ),
+            make_message(
+                message_id="101", channel_id="channel-1", content="deploy failed"
+            ),
         ]
         self.closed = False
 
@@ -110,7 +116,9 @@ class FakeDiscordClient:
             for message in self.messages
             if cast(str, message["channel_id"]) == channel_id
         ]
-        messages = sorted(messages, key=lambda message: int(cast(str, message["id"])), reverse=True)
+        messages = sorted(
+            messages, key=lambda message: int(cast(str, message["id"])), reverse=True
+        )
         return messages[:limit]
 
     async def send_message(
@@ -121,7 +129,9 @@ class FakeDiscordClient:
         attachments: Sequence[DiscordUpload] = (),
         sticker_ids: Sequence[str] = (),
     ) -> DiscordMessage:
-        raise AssertionError("send_message should not be called by discord_search_messages")
+        raise AssertionError(
+            "send_message should not be called by discord_search_messages"
+        )
 
     async def edit_message(
         self,
@@ -130,7 +140,9 @@ class FakeDiscordClient:
         message_id: str,
         content: str,
     ) -> DiscordMessage:
-        raise AssertionError("edit_message should not be called by discord_search_messages")
+        raise AssertionError(
+            "edit_message should not be called by discord_search_messages"
+        )
 
     async def add_reaction(
         self,
@@ -139,7 +151,9 @@ class FakeDiscordClient:
         message_id: str,
         emoji: str,
     ) -> None:
-        raise AssertionError("add_reaction should not be called by discord_search_messages")
+        raise AssertionError(
+            "add_reaction should not be called by discord_search_messages"
+        )
 
     async def create_thread(
         self,
@@ -149,7 +163,9 @@ class FakeDiscordClient:
         message_id: str | None = None,
         auto_archive_duration: int = 1440,
     ) -> DiscordThread:
-        raise AssertionError("create_thread should not be called by discord_search_messages")
+        raise AssertionError(
+            "create_thread should not be called by discord_search_messages"
+        )
 
     async def aclose(self) -> None:
         self.closed = True
@@ -157,7 +173,9 @@ class FakeDiscordClient:
 
 @pytest.mark.asyncio
 async def test_discord_search_messages_requires_bot_token() -> None:
-    with pytest.raises(DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"):
+    with pytest.raises(
+        DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"
+    ):
         await _discord_search_messages(
             contains="deploy",
             channel_ids=["channel-1"],

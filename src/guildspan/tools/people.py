@@ -11,9 +11,9 @@ from guildspan.tools._common import (
     assert_guild_is_allowed,
     bounded_int,
     optional_id,
+    require_bot_token,
     required_id,
     required_text,
-    require_bot_token,
     resolve_settings,
 )
 
@@ -280,9 +280,7 @@ async def _get_role_index(
     if not resolve_roles:
         return None
     roles = await client.list_guild_roles(guild_id)
-    return {
-        _required_id_field(role, "role"): _summarize_role(role) for role in roles
-    }
+    return {_required_id_field(role, "role"): _summarize_role(role) for role in roles}
 
 
 def _summarize_user(user: dict[str, object]) -> dict[str, object]:
@@ -308,7 +306,9 @@ def _summarize_member(
 ) -> dict[str, object]:
     user_value = member.get("user")
     if not isinstance(user_value, dict):
-        raise DiscordApiError("Discord member response did not include a valid user object.")
+        raise DiscordApiError(
+            "Discord member response did not include a valid user object."
+        )
     user = _summarize_user(cast(dict[str, object], user_value))
     nickname = _optional_string_field(member, "nick")
     role_ids = _string_list_field(member, "roles")

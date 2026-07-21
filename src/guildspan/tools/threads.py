@@ -9,9 +9,9 @@ from guildspan.tools._common import (
     bounded_int,
     build_client,
     optional_id,
+    require_bot_token,
     required_id,
     required_text,
-    require_bot_token,
     resolve_settings,
 )
 

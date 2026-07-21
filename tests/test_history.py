@@ -77,7 +77,9 @@ class FakeDiscordClient:
         )
 
     async def list_guild_channels(self, guild_id: str) -> list[DiscordChannel]:
-        raise AssertionError("list_guild_channels should not be called by discord_read_messages")
+        raise AssertionError(
+            "list_guild_channels should not be called by discord_read_messages"
+        )
 
     async def list_channel_messages(
         self,
@@ -130,7 +132,9 @@ class FakeDiscordClient:
         attachments: Sequence[DiscordUpload] = (),
         sticker_ids: Sequence[str] = (),
     ) -> DiscordMessage:
-        raise AssertionError("send_message should not be called by discord_read_messages")
+        raise AssertionError(
+            "send_message should not be called by discord_read_messages"
+        )
 
     async def edit_message(
         self,
@@ -139,7 +143,9 @@ class FakeDiscordClient:
         message_id: str,
         content: str,
     ) -> DiscordMessage:
-        raise AssertionError("edit_message should not be called by discord_read_messages")
+        raise AssertionError(
+            "edit_message should not be called by discord_read_messages"
+        )
 
     async def add_reaction(
         self,
@@ -148,7 +154,9 @@ class FakeDiscordClient:
         message_id: str,
         emoji: str,
     ) -> None:
-        raise AssertionError("add_reaction should not be called by discord_read_messages")
+        raise AssertionError(
+            "add_reaction should not be called by discord_read_messages"
+        )
 
     async def create_thread(
         self,
@@ -158,7 +166,9 @@ class FakeDiscordClient:
         message_id: str | None = None,
         auto_archive_duration: int = 1440,
     ) -> DiscordThread:
-        raise AssertionError("create_thread should not be called by discord_read_messages")
+        raise AssertionError(
+            "create_thread should not be called by discord_read_messages"
+        )
 
     async def aclose(self) -> None:
         self.closed = True
@@ -166,7 +176,9 @@ class FakeDiscordClient:
 
 @pytest.mark.asyncio
 async def test_discord_read_messages_requires_bot_token() -> None:
-    with pytest.raises(DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"):
+    with pytest.raises(
+        DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"
+    ):
         await _discord_read_messages(
             channel_id="channel-1",
             settings=make_settings(discord_bot_token=None),
@@ -232,7 +244,9 @@ async def test_discord_read_messages_filters_and_summarizes_context() -> None:
                 components=[
                     {
                         "type": 1,
-                        "components": [{"type": 2, "label": "Details", "custom_id": "details"}],
+                        "components": [
+                            {"type": 2, "label": "Details", "custom_id": "details"}
+                        ],
                     }
                 ],
                 mentions=[{"id": "user-9", "username": "bob", "bot": False}],

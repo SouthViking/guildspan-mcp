@@ -39,6 +39,12 @@ def test_settings_parse_allowed_ids() -> None:
     assert settings.allowed_channel_ids == {"abc", "def"}
 
 
+def test_blank_default_guild_id_is_normalized_to_none() -> None:
+    settings = make_settings(discord_default_guild_id="   ")
+
+    assert settings.default_guild_id is None
+
+
 def test_settings_parse_attachment_mime_patterns() -> None:
     settings = make_settings(
         discord_max_attachment_bytes=2048,

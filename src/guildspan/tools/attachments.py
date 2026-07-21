@@ -36,9 +36,7 @@ from guildspan.tools._common import (
 
 ALLOWED_CDN_HOSTS = frozenset({"cdn.discordapp.com", "media.discordapp.net"})
 ALLOWED_ATTACHMENT_PATH_PREFIXES = ("/attachments/", "/ephemeral-attachments/")
-MIME_TYPE_RE = re.compile(
-    r"^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$"
-)
+MIME_TYPE_RE = re.compile(r"^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$")
 MIME_PATTERN_RE = re.compile(
     r"^(?:\*/\*|[a-z0-9][a-z0-9!#$&^_.+-]*/(?:\*|[a-z0-9][a-z0-9!#$&^_.+-]*))$"
 )
@@ -132,9 +130,7 @@ class DiscordAttachmentDownloader:
                             f"{max_bytes} bytes while downloading."
                         )
         except httpx.HTTPError as exc:
-            raise DiscordAttachmentError(
-                f"Discord CDN download failed: {exc}"
-            ) from exc
+            raise DiscordAttachmentError(f"Discord CDN download failed: {exc}") from exc
 
         return DownloadedAttachment(
             data=bytes(payload),
@@ -401,8 +397,7 @@ def _validate_mime_patterns(patterns: set[str]) -> None:
 def _assert_mime_allowed(mime_type: str, patterns: set[str]) -> None:
     if patterns and not any(fnmatchcase(mime_type, pattern) for pattern in patterns):
         raise DiscordPermissionError(
-            f"MIME type {mime_type} is not in "
-            "DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES."
+            f"MIME type {mime_type} is not in DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES."
         )
 
 

@@ -34,7 +34,9 @@ class FakeDiscordClient:
         )
 
     async def list_guild_channels(self, guild_id: str) -> list[DiscordChannel]:
-        raise AssertionError("list_guild_channels should not be called by discord_create_thread")
+        raise AssertionError(
+            "list_guild_channels should not be called by discord_create_thread"
+        )
 
     async def list_channel_messages(
         self,
@@ -45,7 +47,9 @@ class FakeDiscordClient:
         after: str | None = None,
         around: str | None = None,
     ) -> list[dict[str, object]]:
-        raise AssertionError("list_channel_messages should not be called by discord_create_thread")
+        raise AssertionError(
+            "list_channel_messages should not be called by discord_create_thread"
+        )
 
     async def send_message(
         self,
@@ -55,7 +59,9 @@ class FakeDiscordClient:
         attachments: Sequence[DiscordUpload] = (),
         sticker_ids: Sequence[str] = (),
     ) -> DiscordMessage:
-        raise AssertionError("send_message should not be called by discord_create_thread")
+        raise AssertionError(
+            "send_message should not be called by discord_create_thread"
+        )
 
     async def edit_message(
         self,
@@ -64,7 +70,9 @@ class FakeDiscordClient:
         message_id: str,
         content: str,
     ) -> DiscordMessage:
-        raise AssertionError("edit_message should not be called by discord_create_thread")
+        raise AssertionError(
+            "edit_message should not be called by discord_create_thread"
+        )
 
     async def add_reaction(
         self,
@@ -73,7 +81,9 @@ class FakeDiscordClient:
         message_id: str,
         emoji: str,
     ) -> None:
-        raise AssertionError("add_reaction should not be called by discord_create_thread")
+        raise AssertionError(
+            "add_reaction should not be called by discord_create_thread"
+        )
 
     async def create_thread(
         self,
@@ -105,7 +115,9 @@ class FakeDiscordClient:
 
 @pytest.mark.asyncio
 async def test_discord_create_thread_requires_bot_token() -> None:
-    with pytest.raises(DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"):
+    with pytest.raises(
+        DiscordConfigurationError, match="DISCORD_BOT_TOKEN is required"
+    ):
         await _discord_create_thread(
             channel_id="channel-1",
             name="Incident follow-up",

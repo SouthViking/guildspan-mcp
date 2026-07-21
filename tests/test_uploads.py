@@ -84,9 +84,7 @@ async def test_resolve_path_attachment_rejects_escape_and_relative_path(
 
     with pytest.raises(DiscordPermissionError, match="outside"):
         await resolve_outgoing_attachments(
-            attachments=[
-                PathAttachment(source_type="path", path=str(outside_file))
-            ],
+            attachments=[PathAttachment(source_type="path", path=str(outside_file))],
             settings=make_settings(discord_allowed_upload_paths=str(allowed_root)),
         )
     with pytest.raises(DiscordPermissionError, match="must be absolute"):
@@ -149,7 +147,9 @@ async def test_resolve_base64_attachment_and_make_duplicate_names_unique() -> No
 
 
 @pytest.mark.asyncio
-async def test_resolve_base64_attachment_rejects_invalid_data_and_mime_mismatch() -> None:
+async def test_resolve_base64_attachment_rejects_invalid_data_and_mime_mismatch() -> (
+    None
+):
     with pytest.raises(DiscordUploadError, match="not valid base64"):
         await resolve_outgoing_attachments(
             attachments=[
@@ -176,7 +176,9 @@ async def test_resolve_base64_attachment_rejects_invalid_data_and_mime_mismatch(
 
 
 @pytest.mark.asyncio
-async def test_resolve_attachments_enforces_count_size_total_and_mime_allowlist() -> None:
+async def test_resolve_attachments_enforces_count_size_total_and_mime_allowlist() -> (
+    None
+):
     encoded = base64.b64encode(b"1234").decode("ascii")
     attachment = Base64Attachment(
         source_type="base64",
@@ -233,9 +235,7 @@ async def test_resolve_url_attachment_downloads_public_file_without_auth() -> No
                     url="https://files.example/image.png",
                 )
             ],
-            settings=make_settings(
-                discord_allowed_upload_url_hosts="files.example"
-            ),
+            settings=make_settings(discord_allowed_upload_url_hosts="files.example"),
             downloader=downloader,
         )
     finally:

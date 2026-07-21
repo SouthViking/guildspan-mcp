@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from typing import Protocol, Sequence
 
-from discord_mcp_bridge.config import Settings, load_settings
-from discord_mcp_bridge.discord_client import (
+from guildspan.config import Settings, load_settings
+from guildspan.discord_client import (
     DiscordChannel,
     DiscordClient,
     DiscordMessage,
     DiscordThread,
     DiscordUpload,
 )
-from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
+from guildspan.errors import DiscordConfigurationError, DiscordPermissionError
 
 
 class ChannelAccessClientProtocol(Protocol):

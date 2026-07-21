@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.tools._common import (
+from guildspan.config import Settings
+from guildspan.tools._common import (
     DiscordClientProtocol,
     assert_channel_is_allowed,
     build_client,

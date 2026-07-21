@@ -1,12 +1,12 @@
 # AGENTS.md
 
-This repository contains a **local MCP server** named `discord-mcp-bridge`.
+This repository contains a **local MCP server** named `guildspan`.
 
 If you are an AI coding agent and the user asks you to "connect", "configure", "install", or "use" this repository as a plugin/tool in an MCP-capable client, do not treat it as a marketplace plugin. Treat it as a **local MCP server project** that must be installed and then registered in the target client configuration.
 
 ## What This Repo Exposes
 
-- MCP server name: `discord-mcp-bridge`
+- MCP server name: `guildspan`
 - Transport: local process over `stdio`
 - Primary tools today: `discord_health_check`, `discord_list_channels`, `discord_get_channel`, `discord_get_current_bot_user`, `discord_get_user`, `discord_get_member`, `discord_search_members`, `discord_list_roles`, `discord_read_messages`, `discord_download_attachment`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
 
@@ -67,10 +67,10 @@ Optional:
 ```env
 DISCORD_ALLOWED_CHANNELS=123456789012345678
 DISCORD_ALLOWED_GUILDS=123456789012345678
-DISCORD_ACTOR_NAME=SouthViking
+DISCORD_ACTOR_NAME=Ada
 DISCORD_ACTOR_DISCORD_ID=123456789012345678
 DISCORD_APPEND_ATTRIBUTION=true
-DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
+DISCORD_ATTRIBUTION_TEXT=sent using GuildSpan
 DISCORD_MAX_ATTACHMENT_BYTES=10485760
 DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=image/*,application/pdf
 DISCORD_ALLOWED_UPLOAD_PATHS=/absolute/path/to/allowed/media
@@ -87,13 +87,13 @@ Prefer the installed console script:
 macOS/Linux:
 
 ```text
-/path/to/repo/.venv/bin/discord-mcp-bridge
+/path/to/repo/.venv/bin/guildspan
 ```
 
 Windows:
 
 ```text
-C:\path\to\repo\.venv\Scripts\discord-mcp-bridge.exe
+C:\path\to\repo\.venv\Scripts\guildspan.exe
 ```
 
 Fallback:
@@ -101,13 +101,13 @@ Fallback:
 macOS/Linux:
 
 ```text
-/path/to/repo/.venv/bin/python -m discord_mcp_bridge.server
+/path/to/repo/.venv/bin/python -m guildspan.server
 ```
 
 Windows:
 
 ```text
-C:\path\to\repo\.venv\Scripts\python.exe -m discord_mcp_bridge.server
+C:\path\to\repo\.venv\Scripts\python.exe -m guildspan.server
 ```
 
 ## Prompt Users Can Give Their Agent
@@ -115,7 +115,7 @@ C:\path\to\repo\.venv\Scripts\python.exe -m discord_mcp_bridge.server
 If a user asks how to install this from another AI client, they can say:
 
 ```text
-Install this repository as a local MCP server named discord-mcp-bridge.
+Install this repository as a local MCP server named guildspan.
 Do not treat it as a marketplace plugin. Create a Python virtual environment,
 install the project in editable mode, register the MCP command in my client
 config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
@@ -129,21 +129,21 @@ client and verify that the Discord MCP tools appear.
 Add to `~/.codex/config.toml` or project `.codex/config.toml`:
 
 ```toml
-[mcp_servers.discord-mcp-bridge]
-command = "/path/to/repo/.venv/bin/discord-mcp-bridge"
+[mcp_servers.guildspan]
+command = "/path/to/repo/.venv/bin/guildspan"
 
-[mcp_servers.discord-mcp-bridge.env]
+[mcp_servers.guildspan.env]
 DISCORD_BOT_TOKEN = "your-bot-token"
 DISCORD_ALLOWED_CHANNELS = "123456789012345678"
-DISCORD_ACTOR_NAME = "SouthViking"
+DISCORD_ACTOR_NAME = "Ada"
 DISCORD_APPEND_ATTRIBUTION = "true"
-DISCORD_ATTRIBUTION_TEXT = "sent using Discord Bridge"
+DISCORD_ATTRIBUTION_TEXT = "sent using GuildSpan"
 ```
 
 On Windows, use:
 
 ```toml
-command = "C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe"
+command = "C:\\path\\to\\repo\\.venv\\Scripts\\guildspan.exe"
 ```
 
 ### Cursor
@@ -153,22 +153,22 @@ Add to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "discord-mcp-bridge": {
-      "command": "/path/to/repo/.venv/bin/discord-mcp-bridge",
+    "guildspan": {
+      "command": "/path/to/repo/.venv/bin/guildspan",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
-        "DISCORD_ACTOR_NAME": "SouthViking",
+        "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
-        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
+        "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
       }
     }
   }
 }
 ```
 
-On Windows, use `C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe` as the command.
+On Windows, use `C:\\path\\to\\repo\\.venv\\Scripts\\guildspan.exe` as the command.
 
 ### Claude Desktop
 
@@ -177,22 +177,22 @@ Add to `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "discord-mcp-bridge": {
-      "command": "/path/to/repo/.venv/bin/discord-mcp-bridge",
+    "guildspan": {
+      "command": "/path/to/repo/.venv/bin/guildspan",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
-        "DISCORD_ACTOR_NAME": "SouthViking",
+        "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
-        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
+        "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
       }
     }
   }
 }
 ```
 
-On Windows, use `C:\\path\\to\\repo\\.venv\\Scripts\\discord-mcp-bridge.exe` as the command.
+On Windows, use `C:\\path\\to\\repo\\.venv\\Scripts\\guildspan.exe` as the command.
 
 ## Verification
 

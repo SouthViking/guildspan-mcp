@@ -1,25 +1,25 @@
 """Project-specific exceptions."""
 
 
-class DiscordMcpBridgeError(Exception):
-    """Base exception for Discord MCP Bridge."""
+class GuildSpanError(Exception):
+    """Base exception for GuildSpan."""
 
 
-class DiscordConfigurationError(DiscordMcpBridgeError):
+class DiscordConfigurationError(GuildSpanError):
     """Raised when required local configuration is missing or invalid."""
 
 
-class DiscordPermissionError(DiscordMcpBridgeError):
+class DiscordPermissionError(GuildSpanError):
     """Raised when local policy blocks an attempted Discord action."""
 
 
-class DiscordApiError(DiscordMcpBridgeError):
+class DiscordApiError(GuildSpanError):
     """Raised when the Discord REST API returns an error."""
 
 
-class DiscordAttachmentError(DiscordMcpBridgeError):
+class DiscordAttachmentError(GuildSpanError):
     """Raised when a Discord attachment cannot be safely downloaded."""
 
 
-class DiscordUploadError(DiscordMcpBridgeError):
+class DiscordUploadError(GuildSpanError):
     """Raised when an outgoing attachment cannot be safely prepared."""

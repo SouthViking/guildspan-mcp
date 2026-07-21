@@ -1,12 +1,14 @@
-# Discord MCP Bridge
+# GuildSpan
 
-[![CI](https://github.com/SouthViking/discord-mcp-bridge/actions/workflows/ci.yml/badge.svg)](https://github.com/SouthViking/discord-mcp-bridge/actions/workflows/ci.yml)
+[![CI](https://github.com/SouthViking/guildspan-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/SouthViking/guildspan-mcp/actions/workflows/ci.yml)
 
-Discord MCP Bridge is a local MCP server that exposes Discord bot actions to AI coding clients such as Codex, Claude, Cursor, and other MCP-capable tools.
+GuildSpan connects AI agents to Discord communities through a local MCP server. It exposes Discord bot actions to Codex, Claude, Cursor, and other MCP-capable clients.
 
 It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, rich message and media inspection, secure attachment downloads, message search, sending text, files, and stickers, editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
 It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
+
+GuildSpan is an independent open-source project and is not affiliated with or endorsed by Discord.
 
 ## AI Client Quickstart
 
@@ -15,7 +17,7 @@ If you are connecting this repo from an AI editor or assistant, treat it as a **
 You can give an AI coding agent this prompt:
 
 ```text
-Install this repository as a local MCP server named discord-mcp-bridge.
+Install this repository as a local MCP server named guildspan.
 Do not treat it as a marketplace plugin. Create a Python virtual environment,
 install the project in editable mode, register the MCP command in my client
 config, set DISCORD_BOT_TOKEN in the MCP env block, then restart/reload the
@@ -85,7 +87,7 @@ Contribution notes live in [CONTRIBUTING.md](CONTRIBUTING.md).
 ```text
 Codex / Claude / Cursor
   -> calls a local MCP tool
-Discord MCP Bridge
+GuildSpan
   -> validates config and policy
   -> calls Discord REST API with a bot token
 Discord
@@ -99,7 +101,7 @@ This project is designed for Python 3.11+.
 With `uv`:
 
 ```bash
-uv sync --dev
+uv sync --extra dev
 uv run pytest
 uv run mypy
 ```
@@ -136,13 +138,13 @@ The MCP command works best after the editable install because it exposes the con
 macOS/Linux:
 
 ```text
-.venv/bin/discord-mcp-bridge
+.venv/bin/guildspan
 ```
 
 Windows:
 
 ```text
-.venv\Scripts\discord-mcp-bridge.exe
+.venv\Scripts\guildspan.exe
 ```
 
 ## Configuration
@@ -177,7 +179,7 @@ DISCORD_ALLOWED_CHANNELS=
 DISCORD_ACTOR_NAME=
 DISCORD_ACTOR_DISCORD_ID=
 DISCORD_APPEND_ATTRIBUTION=true
-DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
+DISCORD_ATTRIBUTION_TEXT=sent using GuildSpan
 DISCORD_MAX_ATTACHMENT_BYTES=10485760
 DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES=
 DISCORD_ALLOWED_UPLOAD_PATHS=
@@ -201,7 +203,7 @@ DISCORD_DEFAULT_GUILD_ID=your-server-id
 DISCORD_ALLOWED_CHANNELS=channel-id
 DISCORD_ACTOR_NAME=your-name
 DISCORD_APPEND_ATTRIBUTION=true
-DISCORD_ATTRIBUTION_TEXT=sent using Discord Bridge
+DISCORD_ATTRIBUTION_TEXT=sent using GuildSpan
 ```
 
 Behavior notes:
@@ -210,7 +212,7 @@ Behavior notes:
 - If `DISCORD_ALLOWED_CHANNELS` is set, channel-scoped tools only operate on listed channel IDs.
 - If `DISCORD_ALLOWED_GUILDS` is set, channel-scoped tools validate the target channel's guild before acting.
 - If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools place the configured actor in bold above the message body and append a Discord subtext footer. `DISCORD_ACTOR_NAME` supplies the visible actor label; `DISCORD_ACTOR_DISCORD_ID` is a mention-style fallback.
-- `DISCORD_ATTRIBUTION_TEXT` controls the branded portion and defaults to `sent using Discord Bridge`.
+- `DISCORD_ATTRIBUTION_TEXT` controls the branded portion and defaults to `sent using GuildSpan`.
 - Set `DISCORD_ATTRIBUTION_TEXT` to a blank value to restore the legacy `sent via MCP by ...` footer from `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID`.
 - `DISCORD_MAX_ATTACHMENT_BYTES` is the server-side attachment download ceiling; the default is 10 MiB. A tool caller can request a smaller per-call `max_bytes`, but cannot raise this ceiling.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` optionally restricts downloads with comma-separated exact MIME types or wildcards, for example `image/*,application/pdf`. When unset, any syntactically valid MIME type is accepted.
@@ -242,13 +244,13 @@ Using the console script is the cleanest option after installation:
 macOS/Linux:
 
 ```text
-command: /path/to/repo/.venv/bin/discord-mcp-bridge
+command: /path/to/repo/.venv/bin/guildspan
 ```
 
 Windows:
 
 ```text
-command: C:\Users\<you>\path\to\discord-mcp-bridge\.venv\Scripts\discord-mcp-bridge.exe
+command: C:\Users\<you>\path\to\guildspan-mcp\.venv\Scripts\guildspan.exe
 ```
 
 If a client prefers Python explicitly, this also works:
@@ -257,14 +259,14 @@ macOS/Linux:
 
 ```text
 command: /path/to/repo/.venv/bin/python
-args: ["-m", "discord_mcp_bridge.server"]
+args: ["-m", "guildspan.server"]
 ```
 
 Windows:
 
 ```text
-command: C:\Users\<you>\path\to\discord-mcp-bridge\.venv\Scripts\python.exe
-args: ["-m", "discord_mcp_bridge.server"]
+command: C:\Users\<you>\path\to\guildspan-mcp\.venv\Scripts\python.exe
+args: ["-m", "guildspan.server"]
 ```
 
 Do not assume this repository auto-installs itself as a marketplace plugin. It must be registered explicitly as a local MCP server.
@@ -274,19 +276,19 @@ Do not assume this repository auto-installs itself as a marketplace plugin. It m
 Add this to `~/.codex/config.toml` or your project `.codex/config.toml`:
 
 ```toml
-[mcp_servers.discord-mcp-bridge]
-command = "/path/to/discord-mcp-bridge/.venv/bin/discord-mcp-bridge"
+[mcp_servers.guildspan]
+command = "/path/to/guildspan-mcp/.venv/bin/guildspan"
 
-[mcp_servers.discord-mcp-bridge.env]
+[mcp_servers.guildspan.env]
 DISCORD_BOT_TOKEN = "your-bot-token"
 DISCORD_DEFAULT_GUILD_ID = "123456789012345678"
 DISCORD_ALLOWED_CHANNELS = "123456789012345678"
-DISCORD_ACTOR_NAME = "SouthViking"
+DISCORD_ACTOR_NAME = "Ada"
 DISCORD_APPEND_ATTRIBUTION = "true"
-DISCORD_ATTRIBUTION_TEXT = "sent using Discord Bridge"
+DISCORD_ATTRIBUTION_TEXT = "sent using GuildSpan"
 ```
 
-On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
+On Windows, use the `.venv\\Scripts\\guildspan.exe` path instead.
 
 ## Cursor
 
@@ -295,23 +297,23 @@ Add this to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "discord-mcp-bridge": {
-      "command": "/path/to/discord-mcp-bridge/.venv/bin/discord-mcp-bridge",
+    "guildspan": {
+      "command": "/path/to/guildspan-mcp/.venv/bin/guildspan",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_DEFAULT_GUILD_ID": "123456789012345678",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
-        "DISCORD_ACTOR_NAME": "SouthViking",
+        "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
-        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
+        "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
       }
     }
   }
 }
 ```
 
-On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
+On Windows, use the `.venv\\Scripts\\guildspan.exe` path instead.
 
 ## Claude Desktop
 
@@ -320,23 +322,23 @@ Add this to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "discord-mcp-bridge": {
-      "command": "/path/to/discord-mcp-bridge/.venv/bin/discord-mcp-bridge",
+    "guildspan": {
+      "command": "/path/to/guildspan-mcp/.venv/bin/guildspan",
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_DEFAULT_GUILD_ID": "123456789012345678",
         "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
-        "DISCORD_ACTOR_NAME": "SouthViking",
+        "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
-        "DISCORD_ATTRIBUTION_TEXT": "sent using Discord Bridge"
+        "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
       }
     }
   }
 }
 ```
 
-On Windows, use the `.venv\\Scripts\\discord-mcp-bridge.exe` path instead.
+On Windows, use the `.venv\\Scripts\\guildspan.exe` path instead.
 
 ## Reloading After Changes
 

@@ -22,10 +22,11 @@ from mcp.types import (
 )
 from pydantic import AnyUrl
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordClient
-from discord_mcp_bridge.errors import DiscordAttachmentError, DiscordPermissionError
-from discord_mcp_bridge.tools._common import (
+from guildspan import __version__
+from guildspan.config import Settings
+from guildspan.discord_client import DiscordClient
+from guildspan.errors import DiscordAttachmentError, DiscordPermissionError
+from guildspan.tools._common import (
     ChannelAccessClientProtocol,
     assert_channel_is_allowed,
     require_bot_token,
@@ -91,7 +92,7 @@ class DiscordAttachmentDownloader:
         transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
         self._client = httpx.AsyncClient(
-            headers={"User-Agent": "discord-mcp-bridge/0.1.0"},
+            headers={"User-Agent": f"guildspan/{__version__}"},
             timeout=timeout_seconds,
             follow_redirects=False,
             transport=transport,

@@ -5,10 +5,10 @@ import httpx
 import pytest
 from mcp.types import AudioContent, BlobResourceContents, EmbeddedResource, ImageContent
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordChannel
-from discord_mcp_bridge.errors import DiscordAttachmentError, DiscordPermissionError
-from discord_mcp_bridge.tools.attachments import (
+from guildspan.config import Settings
+from guildspan.discord_client import DiscordChannel
+from guildspan.errors import DiscordAttachmentError, DiscordPermissionError
+from guildspan.tools.attachments import (
     DiscordAttachmentDownloader,
     DownloadedAttachment,
     _discord_download_attachment,

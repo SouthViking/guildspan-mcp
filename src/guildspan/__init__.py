@@ -1,4 +1,4 @@
-"""Discord MCP Bridge package."""
+"""GuildSpan package."""
 
 __all__ = ["__version__"]
 

@@ -2,9 +2,9 @@ from typing import Any, cast
 
 import pytest
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
-from discord_mcp_bridge.tools.people import (
+from guildspan.config import Settings
+from guildspan.errors import DiscordConfigurationError, DiscordPermissionError
+from guildspan.tools.people import (
     _discord_get_current_bot_user,
     _discord_get_member,
     _discord_get_user,
@@ -24,8 +24,8 @@ class FakeDiscordPeopleClient:
         self.search_calls: list[tuple[str, str, int]] = []
         self.user: dict[str, object] = {
             "id": "user-1",
-            "username": "southviking",
-            "global_name": "SouthViking",
+            "username": "ada",
+            "global_name": "Ada",
             "discriminator": "0",
             "avatar": "avatar-hash",
             "bot": False,
@@ -125,7 +125,7 @@ async def test_discord_get_current_bot_user_returns_identity() -> None:
     assert result["status"] == "ok"
     assert user["id"] == "bot-1"
     assert user["username"] == "VirtualViking"
-    assert user["display_name"] == "SouthViking"
+    assert user["display_name"] == "Ada"
     assert user["bot"] is True
 
 
@@ -141,9 +141,9 @@ async def test_discord_get_user_returns_public_profile() -> None:
         "status": "ok",
         "user": {
             "id": "user-1",
-            "username": "southviking",
-            "global_name": "SouthViking",
-            "display_name": "SouthViking",
+            "username": "ada",
+            "global_name": "Ada",
+            "display_name": "Ada",
             "discriminator": "0",
             "avatar": "avatar-hash",
             "bot": False,

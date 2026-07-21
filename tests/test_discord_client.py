@@ -3,8 +3,8 @@ import json
 import httpx
 import pytest
 
-from discord_mcp_bridge.discord_client import DiscordClient, DiscordUpload
-from discord_mcp_bridge.errors import DiscordPermissionError
+from guildspan.discord_client import DiscordClient, DiscordUpload
+from guildspan.errors import DiscordPermissionError
 
 
 @pytest.mark.asyncio
@@ -117,7 +117,7 @@ async def test_discord_client_sends_json_text_and_stickers() -> None:
                 "id": "message-1",
                 "channel_id": "channel-1",
                 "content": payload.get("content", ""),
-                "author": {"username": "bridge-bot"},
+                "author": {"username": "guildspan-bot"},
                 "attachments": [],
                 "sticker_items": [
                     {"id": sticker_id, "name": "wave", "format_type": 1}
@@ -161,7 +161,7 @@ async def test_discord_client_sends_multipart_attachments() -> None:
                 "id": "message-1",
                 "channel_id": "channel-1",
                 "content": "look",
-                "author": {"username": "bridge-bot"},
+                "author": {"username": "guildspan-bot"},
                 "attachments": [
                     {
                         "id": "attachment-1",

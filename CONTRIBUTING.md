@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for improving Discord MCP Bridge.
+Thanks for improving GuildSpan.
 
 ## Development Setup
 

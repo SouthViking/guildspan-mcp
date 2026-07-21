@@ -3,14 +3,14 @@ from typing import Any, cast
 
 import pytest
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import (
+from guildspan.config import Settings
+from guildspan.discord_client import (
     DiscordChannel,
     DiscordMessage,
     DiscordThread,
     DiscordUpload,
 )
-from discord_mcp_bridge.tools.diagnostics import _discord_health_check
+from guildspan.tools.diagnostics import _discord_health_check
 
 
 def make_settings(**kwargs: object) -> Settings:

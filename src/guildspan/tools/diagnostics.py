@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.errors import DiscordMcpBridgeError
-from discord_mcp_bridge.tools._common import (
+from guildspan.config import Settings
+from guildspan.errors import GuildSpanError
+from guildspan.tools._common import (
     DiscordClientProtocol,
     assert_channel_is_allowed,
     assert_guild_is_allowed,
@@ -46,7 +46,7 @@ async def _discord_health_check(
     try:
         bot_token = require_bot_token(resolved_settings)
         checks.append(_ok_check("configuration", "DISCORD_BOT_TOKEN is configured."))
-    except DiscordMcpBridgeError as error:
+    except GuildSpanError as error:
         checks.append(_failed_check("configuration", str(error)))
         return _health_result(
             checks=checks,
@@ -65,7 +65,7 @@ async def _discord_health_check(
                     settings=resolved_settings,
                 )
                 checks.append(_ok_check("guild_policy", "Guild is allowed by local policy."))
-            except DiscordMcpBridgeError as error:
+            except GuildSpanError as error:
                 checks.append(_failed_check("guild_policy", str(error)))
 
             if include_channel_sample:

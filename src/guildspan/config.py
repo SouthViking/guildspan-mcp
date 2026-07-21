@@ -1,4 +1,4 @@
-"""Configuration for Discord MCP Bridge."""
+"""Configuration for GuildSpan."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 DEFAULT_MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 DEFAULT_MAX_UPLOAD_TOTAL_BYTES = 24 * 1024 * 1024
-DEFAULT_ATTRIBUTION_TEXT = "sent using Discord Bridge"
+DEFAULT_ATTRIBUTION_TEXT = "sent using GuildSpan"
 
 
 class Settings(BaseSettings):

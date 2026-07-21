@@ -3,15 +3,15 @@ from typing import Any, cast
 
 import pytest
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import (
+from guildspan.config import Settings
+from guildspan.discord_client import (
     DiscordChannel,
     DiscordMessage,
     DiscordThread,
     DiscordUpload,
 )
-from discord_mcp_bridge.errors import DiscordConfigurationError
-from discord_mcp_bridge.tools.search import _discord_search_messages
+from guildspan.errors import DiscordConfigurationError
+from guildspan.tools.search import _discord_search_messages
 
 
 def make_settings(**kwargs: object) -> Settings:

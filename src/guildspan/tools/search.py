@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import cast
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.tools._common import (
+from guildspan.config import Settings
+from guildspan.tools._common import (
     DiscordClientProtocol,
     assert_guild_is_allowed,
     bounded_int,
@@ -17,7 +17,7 @@ from discord_mcp_bridge.tools._common import (
     require_bot_token,
     resolve_settings,
 )
-from discord_mcp_bridge.tools.history import _discord_read_messages
+from guildspan.tools.history import _discord_read_messages
 
 DEFAULT_LIMIT = 25
 DEFAULT_SCAN_LIMIT_PER_CHANNEL = 200

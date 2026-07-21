@@ -1,6 +1,6 @@
 # Security Policy
 
-Discord MCP Bridge is a local MCP server that uses a Discord bot token to call the Discord REST API.
+GuildSpan is a local MCP server that uses a Discord bot token to call the Discord REST API.
 
 ## Supported Versions
 

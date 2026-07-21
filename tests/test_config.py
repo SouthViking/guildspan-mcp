@@ -1,6 +1,6 @@
 from typing import Any, cast
 
-from discord_mcp_bridge.config import Settings, load_settings
+from guildspan.config import Settings, load_settings
 
 
 def make_settings(**kwargs: object) -> Settings:
@@ -13,7 +13,7 @@ def test_settings_can_be_constructed_without_discord_token() -> None:
 
     assert settings.discord_bot_token is None
     assert settings.discord_append_attribution is True
-    assert settings.discord_attribution_text == "sent using Discord Bridge"
+    assert settings.discord_attribution_text == "sent using GuildSpan"
     assert settings.discord_max_attachment_bytes == 10 * 1024 * 1024
     assert settings.allowed_attachment_mime_patterns == set()
     assert settings.allowed_upload_paths == ()

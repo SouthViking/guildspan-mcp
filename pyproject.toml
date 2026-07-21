@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "discord-mcp-bridge"
+name = "guildspan-mcp"
 version = "0.1.0"
-description = "A local FastMCP bridge for Discord REST tools."
+description = "GuildSpan connects AI agents to Discord through a local FastMCP server."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "SouthViking" }]
+authors = [{ name = "GuildSpan contributors" }]
 keywords = ["mcp", "discord", "discord-bot", "fastmcp", "codex", "claude", "cursor"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -30,10 +30,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/SouthViking/discord-mcp-bridge"
-Repository = "https://github.com/SouthViking/discord-mcp-bridge"
-Issues = "https://github.com/SouthViking/discord-mcp-bridge/issues"
-Changelog = "https://github.com/SouthViking/discord-mcp-bridge/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/SouthViking/guildspan-mcp"
+Repository = "https://github.com/SouthViking/guildspan-mcp"
+Issues = "https://github.com/SouthViking/guildspan-mcp/issues"
+Changelog = "https://github.com/SouthViking/guildspan-mcp/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -43,10 +43,10 @@ dev = [
 ]
 
 [project.scripts]
-discord-mcp-bridge = "discord_mcp_bridge.server:main"
+guildspan = "guildspan.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/discord_mcp_bridge"]
+packages = ["src/guildspan"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

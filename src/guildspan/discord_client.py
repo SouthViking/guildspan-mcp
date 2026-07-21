@@ -9,7 +9,8 @@ from urllib.parse import quote
 
 import httpx
 
-from discord_mcp_bridge.errors import DiscordApiError, DiscordPermissionError
+from guildspan import __version__
+from guildspan.errors import DiscordApiError, DiscordPermissionError
 
 DISCORD_API_BASE_URL = "https://discord.com/api/v10"
 
@@ -73,7 +74,7 @@ class DiscordClient:
             base_url=base_url,
             headers={
                 "Authorization": f"Bot {bot_token}",
-                "User-Agent": "discord-mcp-bridge/0.1.0",
+                "User-Agent": f"guildspan/{__version__}",
             },
             timeout=timeout_seconds,
             transport=transport,

@@ -9,7 +9,8 @@ style sections and uses conventional commits for commit messages.
 
 ### Changed
 
-- Message attribution now places the configured actor above the message body and keeps the configurable `sent using Discord Bridge` brand footer below it.
+- Adopted GuildSpan as the project, package, executable, MCP server, and message-attribution brand.
+- Message attribution now places the configured actor above the message body and keeps the configurable `sent using GuildSpan` brand footer below it.
 - `discord_send_message` now accepts optional text, attachments, and native sticker IDs for text-only, media-only, sticker-only, and combined messages.
 
 ### Added
@@ -29,7 +30,7 @@ style sections and uses conventional commits for commit messages.
 
 ### Added
 
-- Local FastMCP server entrypoint for `discord-mcp-bridge`.
+- Local FastMCP server entrypoint for `guildspan`.
 - Discord bot-token REST client over stdio MCP transport.
 - Tools for diagnostics, channel listing and lookup, message history, message search, message sending and editing, thread creation, and reactions.
 - Local safety controls through `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.

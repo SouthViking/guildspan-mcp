@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import DiscordClient
-from discord_mcp_bridge.errors import DiscordApiError
-from discord_mcp_bridge.tools._common import (
+from guildspan.config import Settings
+from guildspan.discord_client import DiscordClient
+from guildspan.errors import DiscordApiError
+from guildspan.tools._common import (
     assert_guild_is_allowed,
     bounded_int,
     optional_id,

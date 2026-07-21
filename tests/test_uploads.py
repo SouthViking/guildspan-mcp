@@ -6,13 +6,13 @@ from typing import Any, cast
 import httpx
 import pytest
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.errors import (
+from guildspan.config import Settings
+from guildspan.errors import (
     DiscordConfigurationError,
     DiscordPermissionError,
     DiscordUploadError,
 )
-from discord_mcp_bridge.tools.uploads import (
+from guildspan.tools.uploads import (
     Base64Attachment,
     HostResolverProtocol,
     PathAttachment,

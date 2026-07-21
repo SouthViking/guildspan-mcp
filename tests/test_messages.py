@@ -4,22 +4,22 @@ from typing import Any, cast
 
 import pytest
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.discord_client import (
+from guildspan.config import Settings
+from guildspan.discord_client import (
     DiscordChannel,
     DiscordMessage,
     DiscordThread,
     DiscordUpload,
 )
-from discord_mcp_bridge.errors import DiscordConfigurationError, DiscordPermissionError
-from discord_mcp_bridge.tools import messages as messages_module
-from discord_mcp_bridge.tools import _common as common_module
-from discord_mcp_bridge.tools.messages import (
+from guildspan.errors import DiscordConfigurationError, DiscordPermissionError
+from guildspan.tools import messages as messages_module
+from guildspan.tools import _common as common_module
+from guildspan.tools.messages import (
     _discord_edit_own_message,
     _discord_send_message,
     discord_send_message,
 )
-from discord_mcp_bridge.tools.uploads import Base64Attachment
+from guildspan.tools.uploads import Base64Attachment
 
 
 def make_settings(**kwargs: object) -> Settings:
@@ -45,7 +45,7 @@ class FakeDiscordClient:
             id="message-1",
             channel_id="1234567890",
             content="hello",
-            author_username="bridge-bot",
+            author_username="guildspan-bot",
         )
         self.sent_payloads: list[tuple[str, str | None]] = []
         self.sent_attachments: list[list[DiscordUpload]] = []
@@ -157,7 +157,7 @@ class EditingDiscordClient(FakeDiscordClient):
             id=message_id,
             channel_id=channel_id,
             content=content,
-            author_username="bridge-bot",
+            author_username="guildspan-bot",
         )
 
 
@@ -198,13 +198,13 @@ async def test_discord_send_message_sends_message() -> None:
         "status": "sent",
         "message_id": "message-1",
         "channel_id": "1234567890",
-        "content": "hello\n\n-# sent using Discord Bridge",
-        "author_username": "bridge-bot",
+        "content": "hello\n\n-# sent using GuildSpan",
+        "author_username": "guildspan-bot",
         "attachments": [],
         "stickers": [],
     }
     assert fake_client.sent_payloads == [
-        ("1234567890", "hello\n\n-# sent using Discord Bridge")
+        ("1234567890", "hello\n\n-# sent using GuildSpan")
     ]
 
 
@@ -331,10 +331,10 @@ async def test_discord_edit_own_message_applies_actor_attribution() -> None:
         content="updated",
         settings=make_settings(
             discord_bot_token="token",
-            discord_actor_name="SouthViking",
+            discord_actor_name="Ada",
             discord_actor_discord_id="4242",
             discord_append_attribution=True,
-            discord_attribution_text="sent using Discord Bridge",
+            discord_attribution_text="sent using GuildSpan",
         ),
         client=fake_client,
     )
@@ -343,14 +343,14 @@ async def test_discord_edit_own_message_applies_actor_attribution() -> None:
         "status": "edited",
         "message_id": "message-1",
         "channel_id": "1234567890",
-        "content": "**SouthViking**\nupdated\n\n-# sent using Discord Bridge",
-        "author_username": "bridge-bot",
+        "content": "**Ada**\nupdated\n\n-# sent using GuildSpan",
+        "author_username": "guildspan-bot",
     }
     assert fake_client.edited_payloads == [
         (
             "1234567890",
             "message-1",
-            "**SouthViking**\nupdated\n\n-# sent using Discord Bridge",
+            "**Ada**\nupdated\n\n-# sent using GuildSpan",
         )
     ]
 
@@ -390,7 +390,7 @@ async def test_discord_send_message_sends_attachment_without_user_text() -> None
         ],
         settings=make_settings(
             discord_bot_token="token",
-            discord_actor_name="SouthViking",
+            discord_actor_name="Ada",
         ),
         client=fake_client,
     )
@@ -398,7 +398,7 @@ async def test_discord_send_message_sends_attachment_without_user_text() -> None
     assert fake_client.sent_payloads == [
         (
             "1234567890",
-            "**SouthViking**\n\n-# sent using Discord Bridge",
+            "**Ada**\n\n-# sent using GuildSpan",
         )
     ]
     assert fake_client.sent_attachments[0][0].filename == "SPOILER_party.gif"
@@ -434,7 +434,7 @@ async def test_discord_send_message_combines_text_attachment_and_sticker() -> No
     )
 
     assert fake_client.sent_payloads == [
-        ("1234567890", "launch\n\n-# sent using Discord Bridge")
+        ("1234567890", "launch\n\n-# sent using GuildSpan")
     ]
     assert fake_client.sent_sticker_ids == [["sticker-1"]]
     assert result["stickers"] == [
@@ -451,7 +451,7 @@ async def test_discord_send_message_sends_sticker_without_user_text() -> None:
         sticker_ids=["sticker-1"],
         settings=make_settings(
             discord_bot_token="token",
-            discord_actor_name="SouthViking",
+            discord_actor_name="Ada",
         ),
         client=fake_client,
     )
@@ -459,7 +459,7 @@ async def test_discord_send_message_sends_sticker_without_user_text() -> None:
     assert fake_client.sent_payloads == [
         (
             "1234567890",
-            "**SouthViking**\n\n-# sent using Discord Bridge",
+            "**Ada**\n\n-# sent using GuildSpan",
         )
     ]
     assert fake_client.sent_attachments == [[]]

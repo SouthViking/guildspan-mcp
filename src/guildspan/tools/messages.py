@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from discord_mcp_bridge.config import Settings
-from discord_mcp_bridge.tools._common import (
+from guildspan.config import Settings
+from guildspan.tools._common import (
     DiscordClientProtocol,
     assert_channel_is_allowed,
     build_client,
@@ -12,7 +12,7 @@ from discord_mcp_bridge.tools._common import (
     require_bot_token,
     resolve_settings,
 )
-from discord_mcp_bridge.tools.uploads import (
+from guildspan.tools.uploads import (
     OutgoingAttachment,
     UploadDownloaderProtocol,
     resolve_outgoing_attachments,

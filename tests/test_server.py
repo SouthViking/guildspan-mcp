@@ -55,7 +55,10 @@ async def test_create_server_registers_discord_send_message_tool() -> None:
         "content",
         "attachments",
         "sticker_ids",
+        "locale",
     }
+    assert "language of the outgoing message" in properties["locale"]["description"]
+    assert "fall back to English" in properties["locale"]["description"]
     attachment_array = properties["attachments"]["anyOf"][0]
     source_variants = attachment_array["items"]["oneOf"]
     assert {

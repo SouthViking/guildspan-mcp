@@ -23,6 +23,13 @@ Please report security issues privately before opening a public issue. If GitHub
 - Grant the bot only the Discord permissions required for the tools you plan to use.
 - Rotate the Discord bot token immediately if it is exposed in logs, commits, screenshots, or issue reports.
 
+## Message Attribution
+
+- Tool callers can select only the outgoing message locale; they cannot provide or replace GuildSpan's attribution text.
+- English, Spanish, and French attribution strings are maintained in a controlled internal catalog. Unsupported or invalid locales fall back to English.
+- `DISCORD_ATTRIBUTION_TEXT` remains an operator-controlled global override. Do not expose environment or configuration-file writes as an MCP tool.
+- `DISCORD_APPEND_ATTRIBUTION=false` is an operator policy decision and cannot be changed per message by the caller.
+
 ## Attachment Downloads
 
 - `discord_download_attachment` resolves attachments from a fresh Discord message response instead of accepting an arbitrary caller-provided URL.

@@ -255,6 +255,8 @@ Behavior notes:
 - If `DISCORD_ALLOWED_GUILDS` is set, channel-scoped tools validate the target channel's guild before acting.
 - If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools place the configured actor in bold above the message body and append a Discord subtext footer. `DISCORD_ACTOR_NAME` supplies the visible actor label; `DISCORD_ACTOR_DISCORD_ID` is a mention-style fallback.
 - `DISCORD_ATTRIBUTION_TEXT` controls the branded portion and defaults to `sent using GuildSpan`.
+- `discord_send_message` accepts a per-message `locale` matching the language of the outgoing content. GuildSpan selects the footer from its controlled `en`, `es`, or `fr` catalog, resolves regional values such as `es-CL` to their base language, and falls back to English for unsupported or invalid locales.
+- The agent never supplies attribution text. Setting `DISCORD_ATTRIBUTION_TEXT` to a non-default value is an operator-controlled global override and takes precedence over per-message localization.
 - Set `DISCORD_ATTRIBUTION_TEXT` to a blank value to restore the legacy `sent via MCP by ...` footer from `DISCORD_ACTOR_NAME` or `DISCORD_ACTOR_DISCORD_ID`.
 - `DISCORD_MAX_ATTACHMENT_BYTES` is the server-side attachment download ceiling; the default is 10 MiB. A tool caller can request a smaller per-call `max_bytes`, but cannot raise this ceiling.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` optionally restricts downloads with comma-separated exact MIME types or wildcards, for example `image/*,application/pdf`. When unset, any syntactically valid MIME type is accepted.
@@ -570,6 +572,7 @@ Inputs:
 - `content`: optional message content.
 - `attachments`: optional list of up to 10 discriminated attachment objects.
 - `sticker_ids`: optional list of up to 3 unique native Discord sticker IDs.
+- `locale`: optional locale matching the language of the outgoing message, for example `en`, `es-CL`, or `fr-FR`. Supported base languages are English, Spanish, and French; unsupported or invalid values fall back to English. For media-only messages, it should match the attribution language requested by the user.
 
 Each attachment sets `source_type` to one of:
 
@@ -585,7 +588,8 @@ Current behavior:
 - Supports images, animated GIF files, audio, video, PDF, archives, and generic documents as ordinary Discord attachments.
 - Downloads URL attachments through a separate unauthenticated client, so the Discord bot token is never forwarded to media hosts.
 - Keeps configured actor/brand attribution even when the caller omits content. Traditional Discord attachments render after the complete text block, so the attribution appears before media.
-- Returns `status`, `message_id`, `channel_id`, `content`, `author_username`, `attachments`, and `stickers`.
+- Selects the attribution from a controlled catalog based on the outgoing message language. The caller chooses only `locale`, never the footer text.
+- Returns `status`, `message_id`, `channel_id`, `content`, `author_username`, `attachments`, `stickers`, `requested_locale`, `resolved_locale`, and `locale_fallback`.
 - Rejects empty messages, unsafe sources, invalid MIME combinations, excess files/stickers, oversized requests, missing config, and blocked channels/guilds before sending.
 
 Text-only example:
@@ -593,7 +597,18 @@ Text-only example:
 ```json
 {
   "channel_id": "123456789012345678",
-  "content": "Deployment completed"
+  "content": "Deployment completed",
+  "locale": "en"
+}
+```
+
+Localized French example:
+
+```json
+{
+  "channel_id": "123456789012345678",
+  "content": "Déploiement terminé",
+  "locale": "fr-FR"
 }
 ```
 

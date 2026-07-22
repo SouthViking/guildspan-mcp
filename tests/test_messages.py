@@ -214,6 +214,9 @@ async def test_discord_send_message_sends_message() -> None:
         "author_username": "guildspan-bot",
         "attachments": [],
         "stickers": [],
+        "requested_locale": None,
+        "resolved_locale": "en",
+        "locale_fallback": False,
     }
     assert fake_client.sent_payloads == [
         ("1234567890", "hello\n\n-# sent using GuildSpan")
@@ -227,6 +230,7 @@ async def test_discord_send_message_appends_branded_attribution() -> None:
     result = await _discord_send_message(
         channel_id="1234567890",
         content="deploy done",
+        locale="fr-FR",
         settings=make_settings(
             discord_bot_token="token",
             discord_actor_discord_id="4242",
@@ -243,12 +247,68 @@ async def test_discord_send_message_appends_branded_attribution() -> None:
 
 
 @pytest.mark.asyncio
+async def test_discord_send_message_localizes_attribution_for_message_language() -> (
+    None
+):
+    fake_client = FakeDiscordClient()
+
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        content="Bonjour à tous !",
+        locale="fr-FR",
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_actor_name="Ada",
+        ),
+        client=fake_client,
+    )
+
+    assert result["content"] == "**Ada**\nBonjour à tous !\n\n-# envoyé via GuildSpan"
+    assert result["requested_locale"] == "fr-FR"
+    assert result["resolved_locale"] == "fr"
+    assert result["locale_fallback"] is False
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_falls_back_to_english_for_unknown_locale() -> None:
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        content="Ciao a tutti!",
+        locale="it-IT",
+        settings=make_settings(discord_bot_token="token"),
+        client=FakeDiscordClient(),
+    )
+
+    assert result["content"] == "Ciao a tutti!\n\n-# sent using GuildSpan"
+    assert result["requested_locale"] == "it-IT"
+    assert result["resolved_locale"] == "en"
+    assert result["locale_fallback"] is True
+
+
+@pytest.mark.asyncio
+async def test_discord_send_message_keeps_operator_attribution_override() -> None:
+    result = await _discord_send_message(
+        channel_id="1234567890",
+        content="Bonjour",
+        locale="fr",
+        settings=make_settings(
+            discord_bot_token="token",
+            discord_attribution_text="delivered securely by My Bridge",
+        ),
+        client=FakeDiscordClient(),
+    )
+
+    assert result["content"] == "Bonjour\n\n-# delivered securely by My Bridge"
+
+
+@pytest.mark.asyncio
 async def test_discord_send_message_can_fall_back_to_actor_attribution() -> None:
     fake_client = FakeDiscordClient()
 
     result = await _discord_send_message(
         channel_id="1234567890",
         content="deploy done",
+        locale="fr-FR",
         settings=make_settings(
             discord_bot_token="token",
             discord_actor_discord_id="4242",
@@ -258,7 +318,7 @@ async def test_discord_send_message_can_fall_back_to_actor_attribution() -> None
         client=fake_client,
     )
 
-    assert result["content"] == "deploy done\n\n-# sent via MCP by <@4242>"
+    assert result["content"] == "deploy done\n\n-# envoyé via MCP par <@4242>"
 
 
 @pytest.mark.asyncio
@@ -390,6 +450,7 @@ async def test_discord_send_message_sends_attachment_without_user_text() -> None
 
     result = await _discord_send_message(
         channel_id="1234567890",
+        locale="es-CL",
         attachments=[
             Base64Attachment(
                 source_type="base64",
@@ -410,9 +471,10 @@ async def test_discord_send_message_sends_attachment_without_user_text() -> None
     assert fake_client.sent_payloads == [
         (
             "1234567890",
-            "**Ada**\n\n-# sent using GuildSpan",
+            "**Ada**\n\n-# enviado usando GuildSpan",
         )
     ]
+    assert result["resolved_locale"] == "es"
     assert fake_client.sent_attachments[0][0].filename == "SPOILER_party.gif"
     assert fake_client.sent_attachments[0][0].description == "Celebration"
     assert result["attachments"] == [

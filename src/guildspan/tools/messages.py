@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
-from guildspan.config import Settings
+from typing import Annotated
+
+from pydantic import Field
+
+from guildspan.config import DEFAULT_ATTRIBUTION_TEXT, Settings
+from guildspan.i18n import (
+    LocaleResolution,
+    get_attribution_text,
+    get_legacy_actor_attribution,
+    resolve_message_locale,
+)
 from guildspan.tools._common import (
     DiscordClientProtocol,
     assert_channel_is_allowed,
@@ -27,14 +37,28 @@ async def discord_send_message(
     content: str | None = None,
     attachments: list[OutgoingAttachment] | None = None,
     sticker_ids: list[str] | None = None,
+    locale: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Locale matching the language of the outgoing message, such as "
+                "en, es-CL, or fr-FR. GuildSpan uses it only to select a controlled "
+                "attribution translation. Supported base languages are en, es, and "
+                "fr; unsupported or invalid locales fall back to English. For "
+                "media-only messages, use the language requested by the user for "
+                "the attribution."
+            )
+        ),
+    ] = None,
 ) -> dict[str, object]:
-    """Send text, attachments, stickers, or any combination to Discord."""
+    """Send content to Discord using the message language as its locale."""
 
     return await _discord_send_message(
         channel_id=channel_id,
         content=content,
         attachments=attachments,
         sticker_ids=sticker_ids,
+        locale=locale,
     )
 
 
@@ -58,6 +82,7 @@ async def _discord_send_message(
     content: str | None = None,
     attachments: list[OutgoingAttachment] | None = None,
     sticker_ids: list[str] | None = None,
+    locale: str | None = None,
     settings: Settings | None = None,
     client: DiscordClientProtocol | None = None,
     upload_downloader: UploadDownloaderProtocol | None = None,
@@ -77,6 +102,7 @@ async def _discord_send_message(
 
     resolved_settings = resolve_settings(settings)
     bot_token = require_bot_token(resolved_settings)
+    locale_resolution = resolve_message_locale(locale)
 
     managed_client = client is None
     discord_client = client or build_client(bot_token=bot_token)
@@ -90,6 +116,7 @@ async def _discord_send_message(
         final_content = _format_message_content(
             content=normalized_content,
             settings=resolved_settings,
+            locale=locale_resolution,
         )
         _assert_content_length(final_content)
         resolved_attachments = await resolve_outgoing_attachments(
@@ -115,6 +142,9 @@ async def _discord_send_message(
         "author_username": message.author_username,
         "attachments": [dict(item) for item in message.attachments],
         "stickers": [dict(item) for item in message.stickers],
+        "requested_locale": locale_resolution.requested,
+        "resolved_locale": locale_resolution.resolved,
+        "locale_fallback": locale_resolution.used_fallback,
     }
 
 
@@ -167,11 +197,20 @@ async def _discord_edit_own_message(
     }
 
 
-def _format_message_content(*, content: str | None, settings: Settings) -> str | None:
+def _format_message_content(
+    *,
+    content: str | None,
+    settings: Settings,
+    locale: LocaleResolution | None = None,
+) -> str | None:
     if not settings.discord_append_attribution:
         return content
 
-    attribution_text = _normalized_or_none(settings.discord_attribution_text)
+    locale_resolution = locale or resolve_message_locale(None)
+    attribution_text = _resolve_attribution_text(
+        configured_text=settings.discord_attribution_text,
+        locale=locale_resolution.resolved,
+    )
     actor_label = _format_actor_label(settings)
     if attribution_text is not None:
         body_parts = [part for part in (actor_label, content) if part is not None]
@@ -186,12 +225,29 @@ def _format_message_content(*, content: str | None, settings: Settings) -> str |
     actor_discord_id = _normalized_or_none(settings.discord_actor_discord_id)
 
     if actor_discord_id is not None:
-        footer = f"-# sent via MCP by <@{actor_discord_id}>"
+        footer = "-# " + get_legacy_actor_attribution(
+            locale=locale_resolution.resolved,
+            actor=f"<@{actor_discord_id}>",
+        )
         return f"{content}\n\n{footer}" if content is not None else footer
     if actor_name is not None:
-        footer = f"-# sent via MCP by {actor_name}"
+        footer = "-# " + get_legacy_actor_attribution(
+            locale=locale_resolution.resolved,
+            actor=actor_name,
+        )
         return f"{content}\n\n{footer}" if content is not None else footer
     return content
+
+
+def _resolve_attribution_text(
+    *, configured_text: str | None, locale: str
+) -> str | None:
+    normalized_text = _normalized_or_none(configured_text)
+    if normalized_text is None:
+        return None
+    if normalized_text == DEFAULT_ATTRIBUTION_TEXT:
+        return get_attribution_text(locale)
+    return normalized_text
 
 
 def _format_actor_label(settings: Settings) -> str | None:

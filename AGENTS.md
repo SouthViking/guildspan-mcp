@@ -222,9 +222,10 @@ MCP clients usually discover tools when they start the local server process. Aft
   - local allowlists configured by the installer
 - Attachment downloads are limited by `DISCORD_MAX_ATTACHMENT_BYTES`, defaulting to 10 MiB.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` can optionally restrict downloads with comma-separated exact MIME types or patterns such as `image/*`.
-- `discord_send_message` accepts optional `content`, up to 10 `attachments` from `path`, `url`, or `base64`, and up to 3 native `sticker_ids`.
+- `discord_send_message` accepts optional `content`, up to 10 `attachments` from `path`, `url`, or `base64`, up to 3 native `sticker_ids`, and a per-message `locale` that must match the language of the outgoing content.
+- The agent selects only the locale, never attribution text. GuildSpan resolves regional locales against its controlled English, Spanish, and French catalog and falls back to English for unsupported or invalid values.
 - Local path uploads are disabled unless absolute roots are configured in `DISCORD_ALLOWED_UPLOAD_PATHS`.
 - Public URL uploads reject non-HTTPS, credentialed, private/local destinations, unsafe redirects, and oversized responses. URL fetches never receive the Discord bot token.
 - Outgoing files are limited by `DISCORD_MAX_UPLOAD_BYTES` per file and `DISCORD_MAX_UPLOAD_TOTAL_BYTES` per message. `DISCORD_ALLOWED_UPLOAD_MIME_TYPES` can further restrict them.
 - File sending requires Discord's `ATTACH_FILES` permission. External native stickers may require `USE_EXTERNAL_STICKERS`.
-- Sent and edited messages place the configured actor above the body and use `DISCORD_ATTRIBUTION_TEXT` as a footer when attribution is enabled.
+- Sent and edited messages place the configured actor above the body when attribution is enabled. Sends localize the default controlled footer from the per-message locale; a non-default `DISCORD_ATTRIBUTION_TEXT` remains an operator-controlled global override.

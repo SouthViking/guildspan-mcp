@@ -228,4 +228,4 @@ MCP clients usually discover tools when they start the local server process. Aft
 - Public URL uploads reject non-HTTPS, credentialed, private/local destinations, unsafe redirects, and oversized responses. URL fetches never receive the Discord bot token.
 - Outgoing files are limited by `DISCORD_MAX_UPLOAD_BYTES` per file and `DISCORD_MAX_UPLOAD_TOTAL_BYTES` per message. `DISCORD_ALLOWED_UPLOAD_MIME_TYPES` can further restrict them.
 - File sending requires Discord's `ATTACH_FILES` permission. External native stickers may require `USE_EXTERNAL_STICKERS`.
-- Sent and edited messages place the configured actor above the body when attribution is enabled. Sends localize the default controlled footer from the per-message locale; a non-default `DISCORD_ATTRIBUTION_TEXT` remains an operator-controlled global override.
+- Sent and edited messages place the configured actor above the body with a leading visual spacer from Discord's native bot header when attribution is enabled. Sends localize the default controlled footer from the per-message locale; a non-default `DISCORD_ATTRIBUTION_TEXT` remains an operator-controlled global override.

@@ -11,6 +11,10 @@ style sections and uses conventional commits for commit messages.
 
 - `discord_send_message` now accepts the outgoing message `locale` and selects a controlled English, Spanish, or French GuildSpan attribution, with regional-locale normalization and safe English fallback.
 
+### Changed
+
+- Messages with a configured actor now include a leading visual spacer between Discord's native bot header and the actor label.
+
 ## [0.1.0] - 2026-07-21
 
 ### Added

@@ -215,6 +215,8 @@ def _format_message_content(
     if attribution_text is not None:
         body_parts = [part for part in (actor_label, content) if part is not None]
         attributed_content = "\n".join(body_parts)
+        if actor_label is not None:
+            attributed_content = f"\n{attributed_content}"
         if attributed_content:
             return f"{attributed_content}\n\n-# {attribution_text}"
         return f"-# {attribution_text}"

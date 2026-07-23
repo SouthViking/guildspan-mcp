@@ -240,9 +240,9 @@ async def test_discord_send_message_appends_branded_attribution() -> None:
         client=fake_client,
     )
 
-    assert result["content"] == "<@4242>\ndeploy done\n\n-# sent using My Bridge"
+    assert result["content"] == "\n<@4242>\ndeploy done\n\n-# sent using My Bridge"
     assert fake_client.sent_payloads == [
-        ("1234567890", "<@4242>\ndeploy done\n\n-# sent using My Bridge")
+        ("1234567890", "\n<@4242>\ndeploy done\n\n-# sent using My Bridge")
     ]
 
 
@@ -263,7 +263,7 @@ async def test_discord_send_message_localizes_attribution_for_message_language()
         client=fake_client,
     )
 
-    assert result["content"] == "**Ada**\nBonjour à tous !\n\n-# envoyé via GuildSpan"
+    assert result["content"] == "\n**Ada**\nBonjour à tous !\n\n-# envoyé via GuildSpan"
     assert result["requested_locale"] == "fr-FR"
     assert result["resolved_locale"] == "fr"
     assert result["locale_fallback"] is False
@@ -415,14 +415,14 @@ async def test_discord_edit_own_message_applies_actor_attribution() -> None:
         "status": "edited",
         "message_id": "message-1",
         "channel_id": "1234567890",
-        "content": "**Ada**\nupdated\n\n-# sent using GuildSpan",
+        "content": "\n**Ada**\nupdated\n\n-# sent using GuildSpan",
         "author_username": "guildspan-bot",
     }
     assert fake_client.edited_payloads == [
         (
             "1234567890",
             "message-1",
-            "**Ada**\nupdated\n\n-# sent using GuildSpan",
+            "\n**Ada**\nupdated\n\n-# sent using GuildSpan",
         )
     ]
 
@@ -471,7 +471,7 @@ async def test_discord_send_message_sends_attachment_without_user_text() -> None
     assert fake_client.sent_payloads == [
         (
             "1234567890",
-            "**Ada**\n\n-# enviado usando GuildSpan",
+            "\n**Ada**\n\n-# enviado usando GuildSpan",
         )
     ]
     assert result["resolved_locale"] == "es"
@@ -533,7 +533,7 @@ async def test_discord_send_message_sends_sticker_without_user_text() -> None:
     assert fake_client.sent_payloads == [
         (
             "1234567890",
-            "**Ada**\n\n-# sent using GuildSpan",
+            "\n**Ada**\n\n-# sent using GuildSpan",
         )
     ]
     assert fake_client.sent_attachments == [[]]

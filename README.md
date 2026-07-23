@@ -253,7 +253,7 @@ Behavior notes:
 - If `DISCORD_DEFAULT_GUILD_ID` is set, tools that accept an optional guild ID can use that guild deterministically.
 - If `DISCORD_ALLOWED_CHANNELS` is set, channel-scoped tools only operate on listed channel IDs.
 - If `DISCORD_ALLOWED_GUILDS` is set, channel-scoped tools validate the target channel's guild before acting.
-- If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools place the configured actor in bold above the message body and append a Discord subtext footer. `DISCORD_ACTOR_NAME` supplies the visible actor label; `DISCORD_ACTOR_DISCORD_ID` is a mention-style fallback.
+- If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools place the configured actor in bold above the message body, with a leading visual spacer separating it from Discord's native bot header, and append a Discord subtext footer. `DISCORD_ACTOR_NAME` supplies the visible actor label; `DISCORD_ACTOR_DISCORD_ID` is a mention-style fallback.
 - `DISCORD_ATTRIBUTION_TEXT` controls the branded portion and defaults to `sent using GuildSpan`.
 - `discord_send_message` accepts a per-message `locale` matching the language of the outgoing content. GuildSpan selects the footer from its controlled `en`, `es`, or `fr` catalog, resolves regional values such as `es-CL` to their base language, and falls back to English for unsupported or invalid locales.
 - The agent never supplies attribution text. Setting `DISCORD_ATTRIBUTION_TEXT` to a non-default value is an operator-controlled global override and takes precedence over per-message localization.

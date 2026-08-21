@@ -9,6 +9,8 @@ style sections and uses conventional commits for commit messages.
 
 ### Added
 
+- Human-readable titles, purpose-specific descriptions, and explicit MCP safety annotations for every Discord tool.
+- Server-level MCP instructions for resolving Discord IDs, handling external writes, avoiding ambiguous retries, and keeping credentials out of tool inputs.
 - `discord_send_message` now accepts the outgoing message `locale` and selects a controlled English, Spanish, or French GuildSpan attribution, with regional-locale normalization and safe English fallback.
 - Streamable HTTP runtime at `/mcp`, a dependency-free `/health` endpoint, and a dedicated `guildspan-http` command.
 - Explicit local `guildspan.local` runtime while preserving `python -m guildspan.server` compatibility.

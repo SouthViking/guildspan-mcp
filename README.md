@@ -110,6 +110,8 @@ Discord setup lives in [docs/discord-setup.md](docs/discord-setup.md).
 - Local `stdio` and Streamable HTTP runtimes are supported.
 - The HTTP runtime supports MCP OAuth 2.1 discovery with Discord as the upstream identity provider.
 - Hosted guild access is persisted per Discord user and checked on every guild-scoped tool call.
+- Every tool advertises a human-readable title, purpose-specific description, and explicit MCP read-only, destructive, idempotent, and open-world safety hints.
+- Server instructions tell compatible MCP clients to resolve Discord IDs before writes, avoid ambiguous write retries, and keep credentials out of tool arguments.
 - Guild-level access policy is supported through `DISCORD_ALLOWED_GUILDS`.
 - Configurable branded message attribution is supported.
 - Installation snippets are included for Codex, Claude, and Cursor.

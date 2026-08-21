@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="2048" viewBox="0 0 2048 2048">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="44%" r="72%">
+      <stop offset="0" stop-color="#303742"/>
+      <stop offset="1" stop-color="#22272F"/>
+    </radialGradient>
+    <linearGradient id="ribbon" x1="420" y1="760" x2="1628" y2="1290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#879BB7"/>
+      <stop offset="0.48" stop-color="#9B9BC4"/>
+      <stop offset="1" stop-color="#B19CCE"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="2048" height="2048" rx="384" fill="url(#bg)"/>
+
+  <!-- A continuous bridge/infinity ribbon. The dark under-stroke keeps the crossing crisp. -->
+  <path d="M472 1024
+           C472 760 690 650 900 884
+           L1148 1164
+           C1358 1398 1576 1288 1576 1024
+           C1576 760 1358 650 1148 884
+           L900 1164
+           C690 1398 472 1288 472 1024"
+        fill="none" stroke="#1E232A" stroke-width="318" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M472 1024
+           C472 760 690 650 900 884
+           L1148 1164
+           C1358 1398 1576 1288 1576 1024
+           C1576 760 1358 650 1148 884
+           L900 1164
+           C690 1398 472 1288 472 1024"
+        fill="none" stroke="url(#ribbon)" stroke-width="252" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Bot face: intentionally simple so the mark remains legible at 32 px. -->
+  <rect x="620" y="850" width="808" height="348" rx="174" fill="#252B33" stroke="#343C47" stroke-width="18"/>
+  <rect x="742" y="928" width="126" height="126" rx="44" fill="#F4DFC7"/>
+  <rect x="1180" y="928" width="126" height="126" rx="44" fill="#F4DFC7"/>
+  <rect x="938" y="981" width="172" height="34" rx="17" fill="#F4DFC7"/>
+</svg>

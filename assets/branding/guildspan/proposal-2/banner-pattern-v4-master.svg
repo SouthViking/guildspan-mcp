@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2720" height="960" viewBox="0 0 2720 960">
+  <defs>
+    <linearGradient id="bannerBg" x1="0" y1="0" x2="2720" y2="960" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8E8D5"/>
+      <stop offset="1" stop-color="#F4DDC3"/>
+    </linearGradient>
+
+    <symbol id="spark" viewBox="0 0 100 100">
+      <path d="M50 8C55 34 66 45 92 50C66 55 55 66 50 92C45 66 34 55 8 50C34 45 45 34 50 8Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="chat" viewBox="0 0 100 100">
+      <path d="M18 18h64a12 12 0 0 1 12 12v34a12 12 0 0 1-12 12H47L24 92l5-16H18A12 12 0 0 1 6 64V30a12 12 0 0 1 12-12Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="chatPair" viewBox="0 0 100 100">
+      <path d="M15 15h50a10 10 0 0 1 10 10v23a10 10 0 0 1-10 10H39L20 71l4-13h-9A10 10 0 0 1 5 48V25a10 10 0 0 1 10-10Z" fill="currentColor"/>
+      <path d="M45 49h40a10 10 0 0 1 10 10v18a10 10 0 0 1-10 10h-8l3 10-16-10H45a10 10 0 0 1-10-10V59a10 10 0 0 1 10-10Z" fill="currentColor" opacity=".72"/>
+    </symbol>
+    <symbol id="bot" viewBox="0 0 100 100">
+      <path d="M50 11v14M50 11a6 6 0 1 0 0-12a6 6 0 0 0 0 12Z" stroke="currentColor" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <rect x="13" y="28" width="74" height="54" rx="24" fill="currentColor"/>
+      <circle cx="37" cy="55" r="6" fill="#F7E5D0"/>
+      <circle cx="63" cy="55" r="6" fill="#F7E5D0"/>
+      <path d="M34 70h32" stroke="#F7E5D0" stroke-width="7" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="person" viewBox="0 0 100 100">
+      <circle cx="50" cy="31" r="20" fill="currentColor"/>
+      <path d="M18 89c2-24 15-36 32-36s30 12 32 36H18Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="users" viewBox="0 0 100 100">
+      <circle cx="37" cy="33" r="16" fill="currentColor"/>
+      <circle cx="68" cy="38" r="13" fill="currentColor" opacity=".72"/>
+      <path d="M8 86c2-20 13-30 29-30s27 10 29 30H8Z" fill="currentColor"/>
+      <path d="M54 86c1-15 9-23 21-23s20 8 21 23H54Z" fill="currentColor" opacity=".72"/>
+    </symbol>
+    <symbol id="grid" viewBox="0 0 100 100">
+      <rect x="9" y="9" width="34" height="34" rx="10" fill="currentColor"/>
+      <rect x="57" y="9" width="34" height="34" rx="10" fill="currentColor" opacity=".72"/>
+      <rect x="9" y="57" width="34" height="34" rx="10" fill="currentColor" opacity=".72"/>
+      <rect x="57" y="57" width="34" height="34" rx="10" fill="currentColor"/>
+    </symbol>
+    <symbol id="heart" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="44" fill="currentColor"/>
+      <path d="M50 72 27 50c-14-14 8-31 23-14 15-17 37 0 23 14L50 72Z" fill="#F7E5D0"/>
+    </symbol>
+    <symbol id="search" viewBox="0 0 100 100">
+      <circle cx="42" cy="42" r="29" fill="none" stroke="currentColor" stroke-width="12"/>
+      <path d="m64 64 25 25" stroke="currentColor" stroke-width="12" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="shield" viewBox="0 0 100 100">
+      <path d="M50 6 88 21v30c0 23-15 36-38 44C27 87 12 74 12 51V21L50 6Z" fill="currentColor"/>
+      <path d="m50 28 7 14 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2 7-14Z" fill="#252B33"/>
+    </symbol>
+    <symbol id="paperclip" viewBox="0 0 100 100">
+      <path d="m36 57 30-30c17-17 38 6 22 22L47 90C19 118-16 80 9 55l39-39c22-22 50 8 29 29L40 82c-11 11-26-4-15-15l34-34" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="image" viewBox="0 0 100 100">
+      <rect x="8" y="12" width="84" height="76" rx="12" fill="currentColor"/>
+      <circle cx="70" cy="34" r="9" fill="#F7E5D0"/>
+      <path d="m19 75 23-26 15 17 10-11 17 20H19Z" fill="#F7E5D0"/>
+    </symbol>
+    <symbol id="download" viewBox="0 0 100 100">
+      <path d="M50 11v51M29 44l21 21 21-21M18 86h64" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="branch" viewBox="0 0 100 100">
+      <circle cx="24" cy="18" r="10" fill="currentColor"/>
+      <circle cx="76" cy="50" r="10" fill="currentColor"/>
+      <circle cx="24" cy="82" r="10" fill="currentColor"/>
+      <path d="M24 28v44M34 50h32" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="pencil" viewBox="0 0 100 100">
+      <path d="m17 73-7 21 22-6 55-55-16-16-54 56Z" fill="currentColor"/>
+      <path d="m65 23 16 16" stroke="#252B33" stroke-width="7"/>
+    </symbol>
+    <symbol id="reaction" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="44" fill="currentColor"/>
+      <circle cx="35" cy="42" r="6" fill="#F7E5D0"/>
+      <circle cx="65" cy="42" r="6" fill="#F7E5D0"/>
+      <path d="M30 61c7 17 33 17 40 0" fill="none" stroke="#F7E5D0" stroke-width="8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="pulse" viewBox="0 0 100 100">
+      <path d="M5 55h23l10-30 18 55 12-34 8 9h19" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="link" viewBox="0 0 100 100">
+      <path d="m41 67-8 8c-19 19-46-8-27-27l15-15c16-16 38 1 31 18M59 33l8-8c19-19 46 8 27 27L79 67c-16 16-38-1-31-18" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+
+  <rect width="2720" height="960" fill="url(#bannerBg)"/>
+
+  <!-- Dense, evenly distributed collaboration/automation pattern. -->
+  <g opacity=".94">
+    <use href="#spark" x="62" y="48" width="76" height="76" style="color:#A38EC5"/>
+    <use href="#chat" x="250" y="34" width="94" height="94" style="color:#2B333D"/>
+    <use href="#chatPair" x="492" y="80" width="110" height="110" style="color:#A894CB"/>
+    <use href="#grid" x="744" y="34" width="86" height="86" style="color:#7187A6"/>
+    <use href="#heart" x="982" y="64" width="92" height="92" style="color:#A991CC"/>
+    <use href="#search" x="1224" y="28" width="96" height="96" style="color:#34404D"/>
+    <use href="#spark" x="1466" y="52" width="62" height="62" style="color:#9E8BC5"/>
+    <use href="#shield" x="1694" y="34" width="88" height="88" style="color:#A792CA"/>
+    <use href="#paperclip" x="1942" y="54" width="86" height="86" style="color:#7187A6"/>
+    <use href="#bot" x="2174" y="28" width="92" height="92" style="color:#9E89C3"/>
+    <use href="#branch" x="2428" y="46" width="82" height="82" style="color:#384755"/>
+    <use href="#spark" x="2612" y="74" width="54" height="54" style="color:#A18BC5"/>
+
+    <use href="#image" x="86" y="214" width="94" height="94" style="color:#748AA8"/>
+    <use href="#download" x="322" y="206" width="92" height="92" style="color:#35414E"/>
+    <use href="#person" x="560" y="218" width="88" height="88" style="color:#7087A6"/>
+    <use href="#branch" x="786" y="204" width="96" height="96" style="color:#A48FC8"/>
+    <use href="#pencil" x="1024" y="214" width="92" height="92" style="color:#748AA8"/>
+    <use href="#reaction" x="1262" y="206" width="96" height="96" style="color:#A58FC8"/>
+    <use href="#person" x="1508" y="214" width="88" height="88" style="color:#758AA9"/>
+    <use href="#grid" x="1732" y="214" width="90" height="90" style="color:#A38FC7"/>
+    <use href="#chat" x="1970" y="208" width="96" height="96" style="color:#313B47"/>
+    <use href="#users" x="2208" y="216" width="90" height="90" style="color:#758AA8"/>
+    <use href="#heart" x="2438" y="208" width="94" height="94" style="color:#A58FC9"/>
+
+    <use href="#bot" x="42" y="402" width="96" height="96" style="color:#A38DC6"/>
+    <use href="#users" x="264" y="398" width="94" height="94" style="color:#7186A5"/>
+    <use href="#heart" x="502" y="402" width="92" height="92" style="color:#A58FC9"/>
+    <use href="#pulse" x="728" y="404" width="98" height="98" style="color:#2D3742"/>
+    <use href="#link" x="962" y="396" width="100" height="100" style="color:#8793B6"/>
+    <use href="#chatPair" x="1202" y="398" width="104" height="104" style="color:#2D3742"/>
+    <use href="#paperclip" x="1452" y="406" width="90" height="90" style="color:#9E8AC5"/>
+    <use href="#reaction" x="1684" y="398" width="100" height="100" style="color:#748BA9"/>
+    <use href="#branch" x="1928" y="404" width="92" height="92" style="color:#A38EC7"/>
+    <use href="#image" x="2164" y="404" width="94" height="94" style="color:#768AA8"/>
+    <use href="#download" x="2400" y="402" width="96" height="96" style="color:#36414D"/>
+    <use href="#spark" x="2610" y="428" width="58" height="58" style="color:#9F89C2"/>
+
+    <use href="#person" x="110" y="594" width="90" height="90" style="color:#A18BC4"/>
+    <use href="#chat" x="338" y="586" width="98" height="98" style="color:#7489A7"/>
+    <use href="#grid" x="576" y="592" width="92" height="92" style="color:#A38EC6"/>
+    <use href="#shield" x="812" y="590" width="96" height="96" style="color:#778CA9"/>
+    <use href="#search" x="1052" y="588" width="96" height="96" style="color:#323C48"/>
+    <use href="#bot" x="1290" y="590" width="96" height="96" style="color:#A38EC7"/>
+    <use href="#pencil" x="1530" y="594" width="92" height="92" style="color:#7288A6"/>
+    <use href="#users" x="1764" y="590" width="94" height="94" style="color:#2F3944"/>
+    <use href="#link" x="2002" y="584" width="102" height="102" style="color:#A28DC6"/>
+    <use href="#reaction" x="2248" y="590" width="96" height="96" style="color:#748AA8"/>
+    <use href="#paperclip" x="2484" y="594" width="90" height="90" style="color:#A38FC7"/>
+
+    <use href="#spark" x="58" y="790" width="60" height="60" style="color:#A38DC6"/>
+    <use href="#branch" x="252" y="762" width="92" height="92" style="color:#35414E"/>
+    <use href="#image" x="482" y="760" width="94" height="94" style="color:#748AA8"/>
+    <use href="#chatPair" x="716" y="754" width="104" height="104" style="color:#A38FC8"/>
+    <use href="#heart" x="964" y="760" width="96" height="96" style="color:#768BA9"/>
+    <use href="#grid" x="1204" y="762" width="92" height="92" style="color:#303A46"/>
+    <use href="#pulse" x="1440" y="758" width="98" height="98" style="color:#A18CC5"/>
+    <use href="#person" x="1680" y="762" width="92" height="92" style="color:#7187A5"/>
+    <use href="#shield" x="1914" y="758" width="98" height="98" style="color:#A38FC7"/>
+    <use href="#chat" x="2158" y="760" width="96" height="96" style="color:#303A45"/>
+    <use href="#users" x="2392" y="764" width="92" height="92" style="color:#778BA8"/>
+    <use href="#spark" x="2604" y="792" width="58" height="58" style="color:#A18BC5"/>
+  </g>
+</svg>

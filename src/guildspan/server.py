@@ -1,4 +1,4 @@
-"""FastMCP server entrypoint."""
+"""FastMCP server construction and tool registration."""
 
 from fastmcp import FastMCP
 
@@ -42,9 +42,15 @@ def create_server() -> FastMCP:
 
 
 def main() -> None:
-    """Run the local MCP server over stdio."""
+    """Run the legacy local entrypoint over stdio.
 
-    create_server().run()
+    New integrations should use :mod:`guildspan.local`. This wrapper keeps
+    ``python -m guildspan.server`` compatible with earlier releases.
+    """
+
+    from guildspan.local import main as run_local
+
+    run_local()
 
 
 if __name__ == "__main__":

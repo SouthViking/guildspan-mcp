@@ -10,7 +10,7 @@ from guildspan.discord_client import (
     DiscordThread,
     DiscordUpload,
 )
-from guildspan.errors import DiscordConfigurationError, DiscordPermissionError
+from guildspan.errors import DiscordConfigurationError
 from guildspan.tools.history import _discord_read_messages
 
 
@@ -443,18 +443,3 @@ async def test_discord_read_messages_can_return_oldest_first() -> None:
     messages = cast(list[dict[str, object]], result["messages"])
     assert [message["id"] for message in messages] == ["101", "102", "103"]
     assert result["next_before"] == "101"
-
-
-@pytest.mark.asyncio
-async def test_discord_read_messages_respects_allowed_channels() -> None:
-    fake_client = FakeDiscordClient(messages=[])
-
-    with pytest.raises(DiscordPermissionError, match="not in DISCORD_ALLOWED_CHANNELS"):
-        await _discord_read_messages(
-            channel_id="channel-1",
-            settings=make_settings(
-                discord_bot_token="token",
-                discord_allowed_channels="channel-2",
-            ),
-            client=fake_client,
-        )

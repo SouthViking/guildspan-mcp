@@ -1,13 +1,13 @@
 # AGENTS.md
 
-This repository contains a **local MCP server** named `guildspan`.
+This repository contains an MCP server named `guildspan` with local `stdio` and hosted-development Streamable HTTP runtimes.
 
-If you are an AI coding agent and the user asks you to "connect", "configure", "install", or "use" this repository as a plugin/tool in an MCP-capable client, do not treat it as a marketplace plugin. Treat it as a **local MCP server project** that must be installed and then registered in the target client configuration.
+If a user asks to connect the repository locally, do not treat it as a marketplace plugin. Install it and register the `guildspan` command in the target client. The HTTP runtime is development infrastructure and must not be exposed publicly before OAuth and per-user guild authorization are implemented.
 
 ## What This Repo Exposes
 
 - MCP server name: `guildspan`
-- Transport: local process over `stdio`
+- Transports: local process over `stdio`; Streamable HTTP at `/mcp`
 - Primary tools today: `discord_health_check`, `discord_list_channels`, `discord_get_channel`, `discord_get_current_bot_user`, `discord_get_user`, `discord_get_member`, `discord_search_members`, `discord_list_roles`, `discord_read_messages`, `discord_download_attachment`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
 
 ## Required Setup
@@ -65,7 +65,6 @@ DISCORD_BOT_TOKEN=...
 Optional:
 
 ```env
-DISCORD_ALLOWED_CHANNELS=123456789012345678
 DISCORD_ALLOWED_GUILDS=123456789012345678
 DISCORD_ACTOR_NAME=Ada
 DISCORD_ACTOR_DISCORD_ID=123456789012345678
@@ -101,13 +100,13 @@ Fallback:
 macOS/Linux:
 
 ```text
-/path/to/repo/.venv/bin/python -m guildspan.server
+/path/to/repo/.venv/bin/python -m guildspan.local
 ```
 
 Windows:
 
 ```text
-C:\path\to\repo\.venv\Scripts\python.exe -m guildspan.server
+C:\path\to\repo\.venv\Scripts\python.exe -m guildspan.local
 ```
 
 ## Prompt Users Can Give Their Agent
@@ -134,7 +133,7 @@ command = "/path/to/repo/.venv/bin/guildspan"
 
 [mcp_servers.guildspan.env]
 DISCORD_BOT_TOKEN = "your-bot-token"
-DISCORD_ALLOWED_CHANNELS = "123456789012345678"
+DISCORD_ALLOWED_GUILDS = "123456789012345678"
 DISCORD_ACTOR_NAME = "Ada"
 DISCORD_APPEND_ATTRIBUTION = "true"
 DISCORD_ATTRIBUTION_TEXT = "sent using GuildSpan"
@@ -158,7 +157,7 @@ Add to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
-        "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
+        "DISCORD_ALLOWED_GUILDS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
         "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
@@ -182,7 +181,7 @@ Add to `claude_desktop_config.json`:
       "args": [],
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
-        "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
+        "DISCORD_ALLOWED_GUILDS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
         "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
@@ -212,14 +211,32 @@ After registration, verify these things in order:
 
 MCP clients usually discover tools when they start the local server process. After installation, updates, new tools, or config path changes, restart or reload the client. Some clients may also need a new chat/session before the refreshed tool list appears.
 
+## HTTP Development Runtime
+
+Run the hosted-development entrypoint with:
+
+```bash
+GUILDSPAN_HTTP_HOST=127.0.0.1 GUILDSPAN_HTTP_PORT=8000 .venv/bin/guildspan-http
+```
+
+It exposes `GET /health` and Streamable HTTP MCP at `/mcp`. `PORT` is accepted as an alternative port variable. Keep the host loopback-only until the OAuth 2.1 flow and per-user guild authorization are implemented.
+
+## Persistence Development
+
+The hosted data layer uses PostgreSQL, async SQLAlchemy, psycopg 3, and Alembic.
+Set `DATABASE_URL` and run `.venv/bin/alembic upgrade head` to apply the schema.
+The initial repositories cover Discord-backed users, bot installations, and
+explicit per-user guild access. Do not use ORM `create_all` in production or
+invent OAuth token tables before the chosen FastMCP provider contract is wired.
+
 ## Important Constraints
 
 - This repo uses a **Discord bot token**, not a user token.
-- This repo is a **local MCP server**, not a hosted API.
-- If no allowlists are configured, the bot can send to any channel it can access.
+- This repo includes an HTTP runtime but is not yet an authenticated hosted service.
+- If no guild allowlist is configured, the bot can send to any channel it can access.
 - The effective permissions are the intersection of:
   - Discord permissions granted to the bot
-  - local allowlists configured by the installer
+  - the guild allowlist configured by the operator
 - Attachment downloads are limited by `DISCORD_MAX_ATTACHMENT_BYTES`, defaulting to 10 MiB.
 - `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` can optionally restrict downloads with comma-separated exact MIME types or patterns such as `image/*`.
 - `discord_send_message` accepts optional `content`, up to 10 `attachments` from `path`, `url`, or `base64`, up to 3 native `sticker_ids`, and a per-message `locale` that must match the language of the outgoing content.

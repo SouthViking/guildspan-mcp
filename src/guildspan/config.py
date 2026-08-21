@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import Field
+from typing import Literal
+
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
@@ -12,7 +14,7 @@ DEFAULT_ATTRIBUTION_TEXT = "sent using GuildSpan"
 
 
 class Settings(BaseSettings):
-    """Environment-backed settings for the local MCP server."""
+    """Environment-backed settings shared by local and HTTP runtimes."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -23,7 +25,6 @@ class Settings(BaseSettings):
     discord_bot_token: str | None = None
     discord_default_guild_id: str | None = None
     discord_allowed_guilds: str | None = None
-    discord_allowed_channels: str | None = None
     discord_actor_name: str | None = None
     discord_actor_discord_id: str | None = None
     discord_append_attribution: bool = True
@@ -45,6 +46,40 @@ class Settings(BaseSettings):
         le=25 * 1024 * 1024,
     )
     discord_allowed_upload_mime_types: str | None = None
+    database_url: str | None = Field(
+        default=None,
+        validation_alias="DATABASE_URL",
+    )
+    database_echo: bool = Field(
+        default=False,
+        validation_alias="GUILDSPAN_DATABASE_ECHO",
+    )
+    database_pool_size: int = Field(
+        default=5,
+        gt=0,
+        validation_alias="GUILDSPAN_DATABASE_POOL_SIZE",
+    )
+    database_max_overflow: int = Field(
+        default=10,
+        ge=0,
+        validation_alias="GUILDSPAN_DATABASE_MAX_OVERFLOW",
+    )
+    http_host: str = Field(
+        default="127.0.0.1",
+        validation_alias=AliasChoices("GUILDSPAN_HTTP_HOST", "HOST"),
+    )
+    http_port: int = Field(
+        default=8000,
+        gt=0,
+        le=65535,
+        validation_alias=AliasChoices("GUILDSPAN_HTTP_PORT", "PORT"),
+    )
+    http_log_level: Literal[
+        "critical", "error", "warning", "info", "debug", "trace"
+    ] = Field(
+        default="info",
+        validation_alias="GUILDSPAN_HTTP_LOG_LEVEL",
+    )
 
     @property
     def default_guild_id(self) -> str | None:
@@ -57,12 +92,6 @@ class Settings(BaseSettings):
         """Return normalized configured guild IDs."""
 
         return _parse_csv_ids(self.discord_allowed_guilds)
-
-    @property
-    def allowed_channel_ids(self) -> set[str]:
-        """Return normalized configured channel IDs."""
-
-        return _parse_csv_ids(self.discord_allowed_channels)
 
     @property
     def allowed_attachment_mime_patterns(self) -> set[str]:
@@ -96,6 +125,14 @@ class Settings(BaseSettings):
             value.lower()
             for value in _parse_csv_values(self.discord_allowed_upload_mime_types)
         }
+
+    def require_database_url(self) -> str:
+        """Return the configured database URL or fail with an actionable error."""
+
+        database_url = _normalized_or_none(self.database_url)
+        if database_url is None:
+            raise ValueError("DATABASE_URL is required for persistent GuildSpan data")
+        return database_url
 
 
 def load_settings() -> Settings:

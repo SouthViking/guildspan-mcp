@@ -9,7 +9,6 @@ from guildspan.tools._common import (
     assert_channel_is_allowed,
     assert_guild_is_allowed,
     build_client,
-    filter_allowed_channels,
     optional_id,
     require_bot_token,
     resolve_settings,
@@ -77,16 +76,12 @@ async def _discord_health_check(
                     channels = await discord_client.list_guild_channels(
                         normalized_guild_id
                     )
-                    filtered_channels = filter_allowed_channels(
-                        channels=channels,
-                        settings=resolved_settings,
-                    )
                     checks.append(
                         {
                             "name": "guild_access",
                             "status": "ok",
                             "message": "Guild channels are readable.",
-                            "visible_channel_count": len(filtered_channels),
+                            "visible_channel_count": len(channels),
                         }
                     )
                 except Exception as error:  # noqa: BLE001

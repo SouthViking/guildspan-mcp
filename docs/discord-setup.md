@@ -39,19 +39,18 @@ GuildSpan does not need Administrator, Manage Server, Manage Roles, Kick Members
 
 Use the generated install link to add the bot to your server. The person authorizing a server installation must have permission to manage that server. Discord documents the permission model in [OAuth2 and Permissions](https://docs.discord.com/developers/platform/oauth2-and-permissions).
 
-## 4. Copy server and channel IDs
+## 4. Copy the server ID
 
-In Discord, enable **User Settings → Advanced → Developer Mode**. Then use the context menu on the server or channel to copy its ID.
+In Discord, enable **User Settings → Advanced → Developer Mode**. Then use the server context menu to copy its ID.
 
 Use the IDs to restrict GuildSpan locally:
 
 ```env
 DISCORD_DEFAULT_GUILD_ID=123456789012345678
 DISCORD_ALLOWED_GUILDS=123456789012345678
-DISCORD_ALLOWED_CHANNELS=234567890123456789
 ```
 
-Allowlists are optional, but recommended. Effective access is always the intersection of Discord permissions and these local policies.
+The guild allowlist is optional, but recommended. Channel-level access is governed by Discord role and channel permissions. Effective access is always the intersection of Discord permissions and the GuildSpan guild policy.
 
 ## 5. Verify the connection
 
@@ -60,7 +59,7 @@ After registering GuildSpan in an MCP client, restart or reload the client and c
 1. `discord_health_check`
 2. `discord_get_current_bot_user`
 3. `discord_list_channels`
-4. `discord_read_messages` on an allowed channel
+4. `discord_read_messages` on a channel visible to the bot
 
 Only after the read checks pass, send a test message to a dedicated channel.
 

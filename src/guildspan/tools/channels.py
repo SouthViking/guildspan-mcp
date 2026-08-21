@@ -8,7 +8,6 @@ from guildspan.tools._common import (
     assert_channel_is_allowed,
     assert_guild_is_allowed,
     build_client,
-    filter_allowed_channels,
     require_bot_token,
     required_id,
     resolve_settings,
@@ -85,11 +84,8 @@ async def _discord_list_channels(
         if managed_client:
             await discord_client.aclose()
 
-    filtered_channels = filter_allowed_channels(
-        channels=channels, settings=resolved_settings
-    )
     sorted_channels = sorted(
-        filtered_channels,
+        channels,
         key=lambda channel: (
             channel.position if channel.position is not None else 10**9,
             channel.name or "",

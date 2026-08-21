@@ -20,6 +20,14 @@ Start with `discord_health_check`. It reports token, guild, channel, policy, and
   .venv/bin/python -c "from guildspan.server import create_server; print(create_server().name)"
   ```
 
+## The HTTP runtime does not start
+
+- Reinstall the editable package so the `guildspan-http` command is refreshed.
+- Confirm `GUILDSPAN_HTTP_PORT` or `PORT` is an integer between 1 and 65535.
+- Keep `GUILDSPAN_HTTP_HOST=127.0.0.1` for local development.
+- Verify liveness with `GET http://127.0.0.1:8000/health`.
+- Do not expose `/mcp` publicly before OAuth and per-user guild authorization are implemented.
+
 ## Discord returns 401 Unauthorized
 
 The bot token is missing, invalid, expired, or was reset in the Developer Portal. Replace it in the MCP client configuration and reload the client. Never use a personal Discord user token.
@@ -29,7 +37,7 @@ The bot token is missing, invalid, expired, or was reset in the Developer Portal
 - Confirm the bot is installed in the target server.
 - Confirm the bot can see the target channel.
 - Check channel-specific permission overrides.
-- Check `DISCORD_ALLOWED_GUILDS` and `DISCORD_ALLOWED_CHANNELS`; local policy can intentionally block a channel Discord would otherwise allow.
+- Check `DISCORD_ALLOWED_GUILDS`; local policy can intentionally block every channel in a guild Discord would otherwise allow.
 
 ## Discord returns 403 Missing Permissions
 
@@ -74,4 +82,4 @@ Also check `DISCORD_MAX_ATTACHMENT_BYTES` and `DISCORD_ALLOWED_ATTACHMENT_MIME_T
 
 ## Safe diagnostic information for an issue
 
-Include the GuildSpan version, Python version, operating system, MCP client, failing tool name, sanitized error code, and whether allowlists are enabled. Never include bot tokens, private message content, signed attachment URLs, or private server/channel IDs.
+Include the GuildSpan version, Python version, operating system, MCP client, failing tool name, sanitized error code, and whether the guild allowlist is enabled. Never include bot tokens, private message content, signed attachment URLs, or private server/channel IDs.

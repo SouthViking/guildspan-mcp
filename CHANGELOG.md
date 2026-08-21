@@ -10,10 +10,15 @@ style sections and uses conventional commits for commit messages.
 ### Added
 
 - `discord_send_message` now accepts the outgoing message `locale` and selects a controlled English, Spanish, or French GuildSpan attribution, with regional-locale normalization and safe English fallback.
+- Streamable HTTP runtime at `/mcp`, a dependency-free `/health` endpoint, and a dedicated `guildspan-http` command.
+- Explicit local `guildspan.local` runtime while preserving `python -m guildspan.server` compatibility.
+- Async PostgreSQL persistence with SQLAlchemy and psycopg 3 for users, Discord guild installations, and per-user guild authorization.
+- Alembic configuration and an initial reversible database migration.
 
 ### Changed
 
 - Messages with a configured actor now include a leading visual spacer between Discord's native bot header and the actor label.
+- Access policy is now guild-scoped through `DISCORD_ALLOWED_GUILDS`; channel access is delegated to Discord role and channel permissions.
 
 ## [0.1.0] - 2026-07-21
 

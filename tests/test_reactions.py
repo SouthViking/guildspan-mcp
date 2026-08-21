@@ -10,7 +10,7 @@ from guildspan.discord_client import (
     DiscordThread,
     DiscordUpload,
 )
-from guildspan.errors import DiscordConfigurationError, DiscordPermissionError
+from guildspan.errors import DiscordConfigurationError
 from guildspan.tools.reactions import _discord_add_reaction
 
 
@@ -131,20 +131,3 @@ async def test_discord_add_reaction_records_reaction() -> None:
         "emoji": "👍",
     }
     assert fake_client.reactions == [("channel-1", "message-1", "👍")]
-
-
-@pytest.mark.asyncio
-async def test_discord_add_reaction_respects_allowed_channels() -> None:
-    fake_client = FakeDiscordClient()
-
-    with pytest.raises(DiscordPermissionError, match="not in DISCORD_ALLOWED_CHANNELS"):
-        await _discord_add_reaction(
-            channel_id="channel-1",
-            message_id="message-1",
-            emoji="👍",
-            settings=make_settings(
-                discord_bot_token="token",
-                discord_allowed_channels="channel-2",
-            ),
-            client=fake_client,
-        )

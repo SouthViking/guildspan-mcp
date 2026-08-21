@@ -7,8 +7,14 @@ def test_runtime_version_matches_distribution_metadata() -> None:
     assert __version__ == version("guildspan-mcp")
 
 
-def test_console_script_points_to_server_entrypoint() -> None:
-    scripts = entry_points(group="console_scripts", name="guildspan")
+def test_console_scripts_point_to_runtime_entrypoints() -> None:
+    scripts = {
+        script.name: script.value
+        for script in entry_points(group="console_scripts")
+        if script.name.startswith("guildspan")
+    }
 
-    assert len(scripts) == 1
-    assert next(iter(scripts)).value == "guildspan.server:main"
+    assert scripts == {
+        "guildspan": "guildspan.local:main",
+        "guildspan-http": "guildspan.app:main",
+    }

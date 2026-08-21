@@ -208,31 +208,6 @@ async def test_discord_list_channels_returns_channels_sorted_by_position() -> No
 
 
 @pytest.mark.asyncio
-async def test_discord_list_channels_filters_channel_allowlist() -> None:
-    fake_client = FakeDiscordClient()
-
-    result = await _discord_list_channels(
-        guild_id="guild-1",
-        settings=make_settings(
-            discord_bot_token="token",
-            discord_allowed_channels="channel-2",
-        ),
-        client=fake_client,
-    )
-
-    assert result["count"] == 1
-    assert result["channels"] == [
-        {
-            "id": "channel-2",
-            "name": "dev",
-            "guild_id": "guild-1",
-            "type": 0,
-            "position": 2,
-        }
-    ]
-
-
-@pytest.mark.asyncio
 async def test_discord_list_channels_blocks_non_allowed_guild() -> None:
     fake_client = FakeDiscordClient()
 
@@ -267,18 +242,3 @@ async def test_discord_get_channel_returns_channel_metadata() -> None:
             "position": 1,
         },
     }
-
-
-@pytest.mark.asyncio
-async def test_discord_get_channel_respects_allowed_channels() -> None:
-    fake_client = FakeDiscordClient()
-
-    with pytest.raises(DiscordPermissionError, match="not in DISCORD_ALLOWED_CHANNELS"):
-        await _discord_get_channel(
-            channel_id="channel-1",
-            settings=make_settings(
-                discord_bot_token="token",
-                discord_allowed_channels="channel-2",
-            ),
-            client=fake_client,
-        )

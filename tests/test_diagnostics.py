@@ -147,7 +147,7 @@ async def test_discord_health_check_reports_ok() -> None:
 
 
 @pytest.mark.asyncio
-async def test_discord_health_check_reports_policy_failure_as_degraded() -> None:
+async def test_discord_health_check_reports_guild_policy_failure_as_degraded() -> None:
     fake_client = FakeDiscordClient()
 
     result = await _discord_health_check(
@@ -155,12 +155,12 @@ async def test_discord_health_check_reports_policy_failure_as_degraded() -> None
         channel_id="channel-1",
         settings=make_settings(
             discord_bot_token="token",
-            discord_allowed_channels="channel-2",
+            discord_allowed_guilds="guild-2",
         ),
         client=fake_client,
     )
 
     assert result["status"] == "degraded"
     checks = cast(list[dict[str, object]], result["checks"])
-    assert checks[-1]["name"] == "channel_access"
-    assert checks[-1]["status"] == "failed"
+    assert checks[1]["name"] == "guild_policy"
+    assert checks[1]["status"] == "failed"

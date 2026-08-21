@@ -1,6 +1,6 @@
 # Security Policy
 
-GuildSpan is a local MCP server that uses a Discord bot token to call the Discord REST API.
+GuildSpan is an MCP server that uses a Discord bot token to call the Discord REST API. It supports local `stdio` and Streamable HTTP runtimes.
 
 ## Supported Versions
 
@@ -18,10 +18,16 @@ Please report security issues privately before opening a public issue. If GitHub
 ## Token Safety
 
 - Use a Discord bot token only. Do not use Discord user tokens.
-- Do not commit `.env` files, real bot tokens, guild allowlists, or channel allowlists that should remain private.
-- Prefer `DISCORD_ALLOWED_GUILDS` and `DISCORD_ALLOWED_CHANNELS` for local safety boundaries.
+- Do not commit `.env` files, real bot tokens, or guild allowlists that should remain private.
+- Prefer `DISCORD_ALLOWED_GUILDS` as an operator-controlled safety boundary.
 - Grant the bot only the Discord permissions required for the tools you plan to use.
 - Rotate the Discord bot token immediately if it is exposed in logs, commits, screenshots, or issue reports.
+
+## HTTP Runtime
+
+- Bind the development HTTP runtime to `127.0.0.1` unless a protected network boundary is in place.
+- Do not expose `/mcp` publicly until OAuth 2.1 and per-user guild authorization are implemented.
+- Keep `/health` dependency-free and free of secrets or Discord account data.
 
 ## Message Attribution
 
@@ -46,4 +52,4 @@ Please report security issues privately before opening a public issue. If GitHub
 - URL downloads run through a separate HTTP client without the Discord bot authorization header and are streamed under configured limits.
 - Base64 is decoded strictly, and all sources are checked against per-file and aggregate request ceilings before Discord receives them.
 - Use `DISCORD_ALLOWED_UPLOAD_URL_HOSTS` and `DISCORD_ALLOWED_UPLOAD_MIME_TYPES` to narrow outgoing sources and file types when operating in a sensitive environment.
-- Grant `ATTACH_FILES` only when file sending is needed, and remember that any allowed local file can be sent to any Discord channel permitted by the channel/guild policy.
+- Grant `ATTACH_FILES` only when file sending is needed, and remember that any allowed local file can be sent to any Discord channel permitted by Discord and the guild policy.

@@ -10,7 +10,6 @@ from guildspan.tools._common import (
     assert_guild_is_allowed,
     bounded_int,
     build_client,
-    filter_allowed_channels,
     optional_id,
     require_bot_token,
     required_id,
@@ -156,10 +155,7 @@ async def _resolve_search_channel_ids(
     normalized_guild_id = _resolve_guild_id(guild_id=guild_id, settings=settings)
     assert_guild_is_allowed(guild_id=normalized_guild_id, settings=settings)
     channels = await client.list_guild_channels(normalized_guild_id)
-    return [
-        channel.id
-        for channel in filter_allowed_channels(channels=channels, settings=settings)
-    ]
+    return [channel.id for channel in channels]
 
 
 def _resolve_guild_id(*, guild_id: str | None, settings: Settings) -> str:

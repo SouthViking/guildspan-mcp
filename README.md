@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/SouthViking/guildspan-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/SouthViking/guildspan-mcp/actions/workflows/ci.yml)
 
-GuildSpan connects AI agents to Discord communities through a local MCP server. It exposes Discord bot actions to Codex, Claude, Cursor, and other MCP-capable clients.
+GuildSpan connects AI agents to Discord communities through MCP. It exposes Discord bot actions to Codex, Claude, Cursor, and other MCP-capable clients over local `stdio` or Streamable HTTP.
 
 It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, rich message and media inspection, secure attachment downloads, message search, sending text, files, and stickers, editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
-It is not a hosted service or marketplace plugin. It is a local MCP server that runs on the user's machine and is registered in an MCP-capable client.
+The repository is not yet a hosted public service or marketplace plugin. It includes both the established local runtime and an HTTP application that is being prepared for authenticated hosting.
 
 GuildSpan is an independent open-source project and is not affiliated with or endorsed by Discord.
 
@@ -107,16 +107,17 @@ Discord setup lives in [docs/discord-setup.md](docs/discord-setup.md).
 - `discord_edit_own_message` is implemented.
 - `discord_create_thread` is implemented.
 - `discord_add_reaction` is implemented.
-- Local allowlists for channels and guilds are supported.
+- Local `stdio` and Streamable HTTP runtimes are supported.
+- Guild-level access policy is supported through `DISCORD_ALLOWED_GUILDS`.
 - Configurable branded message attribution is supported.
 - Installation snippets are included for Codex, Claude, and Cursor.
 
 ## Planned Flow
 
 ```text
-Codex / Claude / Cursor
-  -> calls a local MCP tool
-GuildSpan
+MCP client
+  -> local stdio or Streamable HTTP /mcp
+GuildSpan tools
   -> validates config and policy
   -> calls Discord REST API with a bot token
 Discord
@@ -208,16 +209,14 @@ The read-only user, individual member, member search, and role-listing tools do 
 
 For message bodies and rich message fields, enable the privileged `MESSAGE_CONTENT` intent for the bot in the Discord Developer Portal. Without it, Discord can return empty `content`, `attachments`, `embeds`, and `components`, and omit poll data for messages where the bot does not otherwise receive content access.
 
-Optional but recommended local policy controls:
+Optional but recommended local policy control:
 
-- `DISCORD_ALLOWED_CHANNELS`
 - `DISCORD_ALLOWED_GUILDS`
 
 ```env
 DISCORD_BOT_TOKEN=
 DISCORD_DEFAULT_GUILD_ID=
 DISCORD_ALLOWED_GUILDS=
-DISCORD_ALLOWED_CHANNELS=
 DISCORD_ACTOR_NAME=
 DISCORD_ACTOR_DISCORD_ID=
 DISCORD_APPEND_ATTRIBUTION=true
@@ -242,7 +241,7 @@ Recommended configuration:
 ```env
 DISCORD_BOT_TOKEN=your-bot-token
 DISCORD_DEFAULT_GUILD_ID=your-server-id
-DISCORD_ALLOWED_CHANNELS=channel-id
+DISCORD_ALLOWED_GUILDS=your-server-id
 DISCORD_ACTOR_NAME=your-name
 DISCORD_APPEND_ATTRIBUTION=true
 DISCORD_ATTRIBUTION_TEXT=sent using GuildSpan
@@ -251,8 +250,8 @@ DISCORD_ATTRIBUTION_TEXT=sent using GuildSpan
 Behavior notes:
 
 - If `DISCORD_DEFAULT_GUILD_ID` is set, tools that accept an optional guild ID can use that guild deterministically.
-- If `DISCORD_ALLOWED_CHANNELS` is set, channel-scoped tools only operate on listed channel IDs.
 - If `DISCORD_ALLOWED_GUILDS` is set, channel-scoped tools validate the target channel's guild before acting.
+- Channel-level access remains governed by Discord role and channel permissions.
 - If `DISCORD_APPEND_ATTRIBUTION=true`, send and edit tools place the configured actor in bold above the message body, with a leading visual spacer separating it from Discord's native bot header, and append a Discord subtext footer. `DISCORD_ACTOR_NAME` supplies the visible actor label; `DISCORD_ACTOR_DISCORD_ID` is a mention-style fallback.
 - `DISCORD_ATTRIBUTION_TEXT` controls the branded portion and defaults to `sent using GuildSpan`.
 - `discord_send_message` accepts a per-message `locale` matching the language of the outgoing content. GuildSpan selects the footer from its controlled `en`, `es`, or `fr` catalog, resolves regional values such as `es-CL` to their base language, and falls back to English for unsupported or invalid locales.
@@ -270,7 +269,7 @@ Discord setup notes:
 - `DISCORD_BOT_TOKEN` comes from a Discord application bot in the Discord Developer Portal.
 - Use a Discord bot token only. Do not use user tokens.
 - `DISCORD_DEFAULT_GUILD_ID` is the Discord server ID.
-- `DISCORD_ALLOWED_CHANNELS` is a comma-separated list of channel IDs.
+- `DISCORD_ALLOWED_GUILDS` is a comma-separated list of server IDs.
 - The Discord bot must be invited to the server and needs the permissions for the tools you intend to use.
 
 See [Discord bot setup](docs/discord-setup.md) for installation and permission steps, and [Troubleshooting](docs/troubleshooting.md) for common Discord and MCP errors.
@@ -305,17 +304,58 @@ macOS/Linux:
 
 ```text
 command: /path/to/repo/.venv/bin/python
-args: ["-m", "guildspan.server"]
+args: ["-m", "guildspan.local"]
 ```
 
 Windows:
 
 ```text
 command: C:\Users\<you>\path\to\guildspan-mcp\.venv\Scripts\python.exe
-args: ["-m", "guildspan.server"]
+args: ["-m", "guildspan.local"]
 ```
 
 Do not assume this repository auto-installs itself as a marketplace plugin. It must be registered explicitly as a local MCP server.
+
+## HTTP Runtime
+
+GuildSpan also exposes a Streamable HTTP application for development of the hosted service:
+
+```bash
+GUILDSPAN_HTTP_HOST=127.0.0.1 \
+GUILDSPAN_HTTP_PORT=8000 \
+.venv/bin/guildspan-http
+```
+
+The application exposes:
+
+- `GET /health` for dependency-free process health.
+- `/mcp` for Streamable HTTP MCP traffic.
+
+`PORT` is accepted as an alternative to `GUILDSPAN_HTTP_PORT`. The default host is `127.0.0.1`, so the development server is not exposed to other machines unless explicitly configured.
+
+The HTTP runtime does not yet implement the planned OAuth 2.1 user flow. Do not expose it to the public internet with write-capable Discord tools until authentication and per-user guild authorization are in place.
+
+## Persistence
+
+The hosted architecture uses PostgreSQL through async SQLAlchemy and psycopg 3.
+Persistence is optional for the local `stdio` runtime and is not yet used to
+authenticate HTTP requests. The initial schema stores:
+
+- Discord-backed GuildSpan users.
+- GuildSpan bot installations in Discord servers.
+- Explicit active or revoked user access to installed servers.
+
+Configure a PostgreSQL connection and apply the schema with:
+
+```bash
+export DATABASE_URL=postgresql://user:password@host:5432/guildspan
+.venv/bin/alembic upgrade head
+```
+
+Both `postgres://` and `postgresql://` values are normalized to the psycopg 3
+dialect. Database changes must be made through new Alembic revisions; runtime
+code never calls `create_all` in production. See
+[Persistence](docs/persistence.md) for configuration and transaction usage.
 
 ## Codex
 
@@ -328,7 +368,7 @@ command = "/path/to/guildspan-mcp/.venv/bin/guildspan"
 [mcp_servers.guildspan.env]
 DISCORD_BOT_TOKEN = "your-bot-token"
 DISCORD_DEFAULT_GUILD_ID = "123456789012345678"
-DISCORD_ALLOWED_CHANNELS = "123456789012345678"
+DISCORD_ALLOWED_GUILDS = "123456789012345678"
 DISCORD_ACTOR_NAME = "Ada"
 DISCORD_APPEND_ATTRIBUTION = "true"
 DISCORD_ATTRIBUTION_TEXT = "sent using GuildSpan"
@@ -349,7 +389,7 @@ Add this to `.cursor/mcp.json` or `~/.cursor/mcp.json`:
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_DEFAULT_GUILD_ID": "123456789012345678",
-        "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
+        "DISCORD_ALLOWED_GUILDS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
         "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
@@ -374,7 +414,7 @@ Add this to your `claude_desktop_config.json`:
       "env": {
         "DISCORD_BOT_TOKEN": "your-bot-token",
         "DISCORD_DEFAULT_GUILD_ID": "123456789012345678",
-        "DISCORD_ALLOWED_CHANNELS": "123456789012345678",
+        "DISCORD_ALLOWED_GUILDS": "123456789012345678",
         "DISCORD_ACTOR_NAME": "Ada",
         "DISCORD_APPEND_ATTRIBUTION": "true",
         "DISCORD_ATTRIBUTION_TEXT": "sent using GuildSpan"
@@ -418,7 +458,6 @@ Current behavior:
 - Uses `DISCORD_DEFAULT_GUILD_ID` when `guild_id` is omitted.
 - Returns a structured result with `status`, `guild_id`, `count`, and `channels`.
 - Respects `DISCORD_ALLOWED_GUILDS`.
-- Filters the returned list through `DISCORD_ALLOWED_CHANNELS` when that allowlist is configured.
 
 ### `discord_get_channel`
 
@@ -429,7 +468,7 @@ Inputs:
 Current behavior:
 
 - Returns channel metadata with `id`, `name`, `guild_id`, `type`, and `position`.
-- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+- Respects `DISCORD_ALLOWED_GUILDS`.
 
 ### `discord_get_current_bot_user`
 
@@ -522,7 +561,7 @@ Current behavior:
 - Embed output includes image, thumbnail, and video metadata plus provider, author, footer, color, and fields.
 - Returns sticker items, poll payloads, and message components by default. Their include flags can reduce response size when that context is not needed.
 - Media entries in this response are metadata and URLs. Use `discord_download_attachment` when the MCP client needs the actual attachment bytes.
-- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+- Respects `DISCORD_ALLOWED_GUILDS`.
 
 ### `discord_download_attachment`
 
@@ -541,7 +580,7 @@ Current behavior:
 - Validates Discord's declared MIME type against the CDN response and applies the optional `DISCORD_ALLOWED_ATTACHMENT_MIME_TYPES` policy.
 - Uses an unauthenticated CDN client, so the bot token is never forwarded with the file request.
 - Returns images and audio as native MCP image/audio blocks. Videos and other files are returned as binary embedded-resource blocks with filename, MIME type, and size metadata in the structured result.
-- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+- Respects `DISCORD_ALLOWED_GUILDS`.
 
 Discord attachment URLs are signed and can expire. Agents should pass the IDs from `discord_read_messages` to this tool instead of caching and downloading an old URL themselves.
 
@@ -560,9 +599,9 @@ Inputs:
 Current behavior:
 
 - Searches recent visible messages by scanning channel history locally.
-- When `channel_ids` is omitted, searches visible channels in the requested or default guild after allowlist filtering.
+- When `channel_ids` is omitted, searches visible channels in the requested or default guild.
 - Returns `status`, `query`, `count`, `channels_searched`, `scanned_channels`, and `messages`.
-- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+- Respects `DISCORD_ALLOWED_GUILDS`.
 
 ### `discord_send_message`
 
@@ -590,7 +629,7 @@ Current behavior:
 - Keeps configured actor/brand attribution even when the caller omits content. Traditional Discord attachments render after the complete text block, so the attribution appears before media.
 - Selects the attribution from a controlled catalog based on the outgoing message language. The caller chooses only `locale`, never the footer text.
 - Returns `status`, `message_id`, `channel_id`, `content`, `author_username`, `attachments`, `stickers`, `requested_locale`, `resolved_locale`, and `locale_fallback`.
-- Rejects empty messages, unsafe sources, invalid MIME combinations, excess files/stickers, oversized requests, missing config, and blocked channels/guilds before sending.
+- Rejects empty messages, unsafe sources, invalid MIME combinations, excess files/stickers, oversized requests, missing config, and blocked guilds before sending.
 
 Text-only example:
 
@@ -673,7 +712,7 @@ Current behavior:
 - Edits a message through Discord's bot-token API.
 - Applies the same optional branded attribution as `discord_send_message`.
 - Returns `status`, `message_id`, `channel_id`, `content`, and `author_username`.
-- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+- Respects `DISCORD_ALLOWED_GUILDS`.
 
 ### `discord_create_thread`
 
@@ -688,7 +727,7 @@ Current behavior:
 
 - Creates a public thread in a channel, or starts a thread from an existing message.
 - Returns `status`, `thread_id`, `channel_id`, `name`, `parent_channel_id`, `guild_id`, and `type`.
-- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+- Respects `DISCORD_ALLOWED_GUILDS`.
 
 ### `discord_add_reaction`
 
@@ -703,7 +742,7 @@ Current behavior:
 - Adds a reaction to a message as the configured bot.
 - URL-encodes the emoji for Discord's reaction endpoint.
 - Returns `status`, `channel_id`, `message_id`, and `emoji`.
-- Respects `DISCORD_ALLOWED_CHANNELS` and `DISCORD_ALLOWED_GUILDS`.
+- Respects `DISCORD_ALLOWED_GUILDS`.
 
 ## Future Tools
 

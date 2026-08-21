@@ -1,5 +1,6 @@
 import pytest
 
+from guildspan import local as local_module
 from guildspan import server as server_module
 from guildspan.server import create_server
 
@@ -10,18 +11,34 @@ def test_create_server_returns_fastmcp_instance() -> None:
     assert server.name == "GuildSpan"
 
 
-def test_main_runs_the_configured_server(monkeypatch: pytest.MonkeyPatch) -> None:
-    calls: list[str] = []
+def test_local_main_runs_stdio_transport(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[str | None] = []
 
     class RecordingServer:
-        def run(self) -> None:
-            calls.append("run")
+        def run(self, transport: str | None = None) -> None:
+            calls.append(transport)
 
-    monkeypatch.setattr(server_module, "create_server", RecordingServer)
+    monkeypatch.setattr(local_module, "create_server", RecordingServer)
+
+    local_module.main()
+
+    assert calls == ["stdio"]
+
+
+def test_legacy_server_main_delegates_to_local_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str | None] = []
+
+    class RecordingServer:
+        def run(self, transport: str | None = None) -> None:
+            calls.append(transport)
+
+    monkeypatch.setattr(local_module, "create_server", RecordingServer)
 
     server_module.main()
 
-    assert calls == ["run"]
+    assert calls == ["stdio"]
 
 
 @pytest.mark.asyncio

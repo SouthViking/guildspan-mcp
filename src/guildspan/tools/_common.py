@@ -109,13 +109,7 @@ async def assert_channel_is_allowed(
     settings: Settings,
     client: ChannelAccessClientProtocol,
 ) -> None:
-    """Validate that a channel is allowed by the local policy."""
-
-    allowed_channels = settings.allowed_channel_ids
-    if allowed_channels and channel_id not in allowed_channels:
-        raise DiscordPermissionError(
-            f"Channel {channel_id} is not in DISCORD_ALLOWED_CHANNELS."
-        )
+    """Validate that a channel belongs to an allowed guild."""
 
     allowed_guilds = settings.allowed_guild_ids
     if not allowed_guilds:
@@ -141,19 +135,6 @@ def assert_guild_is_allowed(*, guild_id: str, settings: Settings) -> None:
         raise DiscordPermissionError(
             f"Guild {guild_id} is not in DISCORD_ALLOWED_GUILDS."
         )
-
-
-def filter_allowed_channels(
-    *,
-    channels: list[DiscordChannel],
-    settings: Settings,
-) -> list[DiscordChannel]:
-    """Filter listed channels against local channel allowlists."""
-
-    allowed_channels = settings.allowed_channel_ids
-    if not allowed_channels:
-        return channels
-    return [channel for channel in channels if channel.id in allowed_channels]
 
 
 def required_id(value: str, name: str) -> str:

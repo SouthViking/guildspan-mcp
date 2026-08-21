@@ -190,18 +190,15 @@ async def test_discord_search_messages_searches_visible_guild_channels() -> None
     result = await _discord_search_messages(
         contains="DEPLOY",
         guild_id="guild-1",
-        settings=make_settings(
-            discord_bot_token="token",
-            discord_allowed_channels="channel-2",
-        ),
+        settings=make_settings(discord_bot_token="token"),
         client=fake_client,
     )
 
     messages = cast(list[dict[str, object]], result["messages"])
     assert result["status"] == "ok"
-    assert result["count"] == 2
-    assert result["channels_searched"] == 1
-    assert [message["id"] for message in messages] == ["104", "103"]
+    assert result["count"] == 3
+    assert result["channels_searched"] == 2
+    assert [message["id"] for message in messages] == ["101", "104", "103"]
 
 
 @pytest.mark.asyncio

@@ -322,22 +322,6 @@ async def test_discord_send_message_can_fall_back_to_actor_attribution() -> None
 
 
 @pytest.mark.asyncio
-async def test_discord_send_message_blocks_non_allowed_channel() -> None:
-    fake_client = FakeDiscordClient()
-
-    with pytest.raises(DiscordPermissionError, match="not in DISCORD_ALLOWED_CHANNELS"):
-        await _discord_send_message(
-            channel_id="1234567890",
-            content="hello",
-            settings=make_settings(
-                discord_bot_token="token",
-                discord_allowed_channels="9999999999",
-            ),
-            client=fake_client,
-        )
-
-
-@pytest.mark.asyncio
 async def test_discord_send_message_blocks_non_allowed_guild() -> None:
     fake_client = FakeDiscordClient(
         channel=DiscordChannel(

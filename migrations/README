@@ -1,0 +1,5 @@
+GuildSpan database migrations.
+
+Run `alembic upgrade head` with `DATABASE_URL` set to the target PostgreSQL
+database. Railway-style `postgres://` and `postgresql://` URLs are normalized
+to SQLAlchemy's psycopg 3 dialect automatically.

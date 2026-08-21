@@ -25,8 +25,11 @@ Please report security issues privately before opening a public issue. If GitHub
 
 ## HTTP Runtime
 
-- Bind the development HTTP runtime to `127.0.0.1` unless a protected network boundary is in place.
-- Do not expose `/mcp` publicly until OAuth 2.1 and per-user guild authorization are implemented.
+- Unauthenticated HTTP is restricted in code to `127.0.0.1`, `localhost`, or `::1`.
+- Before public exposure, enable `GUILDSPAN_AUTH_ENABLED`, configure the public HTTPS URL, Discord OAuth credentials, a high-entropy `GUILDSPAN_AUTH_SECRET`, PostgreSQL, and a non-empty `DISCORD_ALLOWED_GUILDS`.
+- The hosted runtime uses standard MCP OAuth 2.1 discovery and requires Discord `identify` and `guilds` scopes. It never gives the Discord bot token to an MCP client.
+- OAuth state is encrypted before it is stored in PostgreSQL. Treat `GUILDSPAN_AUTH_SECRET` as a production credential; rotating it invalidates current GuildSpan tokens and makes state encrypted with the old key unreadable.
+- A persisted guild grant is not sufficient by itself: each guild-scoped request also confirms that the Discord user remains a member of the target guild.
 - Keep `/health` dependency-free and free of secrets or Discord account data.
 
 ## Message Attribution

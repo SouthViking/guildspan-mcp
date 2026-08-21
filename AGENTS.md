@@ -1,8 +1,8 @@
 # AGENTS.md
 
-This repository contains an MCP server named `guildspan` with local `stdio` and hosted-development Streamable HTTP runtimes.
+This repository contains an MCP server named `guildspan` with local `stdio` and authenticated hosted Streamable HTTP runtimes.
 
-If a user asks to connect the repository locally, do not treat it as a marketplace plugin. Install it and register the `guildspan` command in the target client. The HTTP runtime is development infrastructure and must not be exposed publicly before OAuth and per-user guild authorization are implemented.
+If a user asks to connect the repository locally, do not treat it as a marketplace plugin. Install it and register the `guildspan` command in the target client. For remote use, configure the standard MCP OAuth HTTP runtime; do not add client-specific authentication behavior.
 
 ## What This Repo Exposes
 
@@ -211,7 +211,7 @@ After registration, verify these things in order:
 
 MCP clients usually discover tools when they start the local server process. After installation, updates, new tools, or config path changes, restart or reload the client. Some clients may also need a new chat/session before the refreshed tool list appears.
 
-## HTTP Development Runtime
+## HTTP Runtime
 
 Run the hosted-development entrypoint with:
 
@@ -219,20 +219,24 @@ Run the hosted-development entrypoint with:
 GUILDSPAN_HTTP_HOST=127.0.0.1 GUILDSPAN_HTTP_PORT=8000 .venv/bin/guildspan-http
 ```
 
-It exposes `GET /health` and Streamable HTTP MCP at `/mcp`. `PORT` is accepted as an alternative port variable. Keep the host loopback-only until the OAuth 2.1 flow and per-user guild authorization are implemented.
+It exposes `GET /health` and Streamable HTTP MCP at `/mcp`. `PORT` is accepted as an alternative port variable. Unauthenticated mode is restricted to loopback.
+
+For hosted mode, set `GUILDSPAN_AUTH_ENABLED=true`, a public HTTPS `GUILDSPAN_PUBLIC_BASE_URL`, Discord OAuth client credentials, a high-entropy `GUILDSPAN_AUTH_SECRET`, `DATABASE_URL`, `DISCORD_BOT_TOKEN`, and a non-empty `DISCORD_ALLOWED_GUILDS`. Register `<public-base-url>/auth/callback` in Discord and run Alembic migrations before startup. The protocol is generic MCP OAuth 2.1 and must not be coupled to Codex or another individual client.
 
 ## Persistence Development
 
 The hosted data layer uses PostgreSQL, async SQLAlchemy, psycopg 3, and Alembic.
 Set `DATABASE_URL` and run `.venv/bin/alembic upgrade head` to apply the schema.
-The initial repositories cover Discord-backed users, bot installations, and
-explicit per-user guild access. Do not use ORM `create_all` in production or
-invent OAuth token tables before the chosen FastMCP provider contract is wired.
+The repositories cover Discord-backed users, bot installations, and explicit
+per-user guild access. The `oauth_state` table follows FastMCP's key-value
+provider contract and stores application-encrypted values. Do not use ORM
+`create_all` in production.
 
 ## Important Constraints
 
 - This repo uses a **Discord bot token**, not a user token.
-- This repo includes an HTTP runtime but is not yet an authenticated hosted service.
+- Hosted HTTP uses standard MCP OAuth 2.1 with Discord `identify` and `guilds`; local `stdio` remains unauthenticated and database-optional.
+- Hosted authorization requires current Discord guild membership plus an active persisted grant. An owner or member with Manage Server may bootstrap the first grant only when the bot is installed and the guild is operator-allowlisted.
 - If no guild allowlist is configured, the bot can send to any channel it can access.
 - The effective permissions are the intersection of:
   - Discord permissions granted to the bot

@@ -64,3 +64,20 @@ After registering GuildSpan in an MCP client, restart or reload the client and c
 Only after the read checks pass, send a test message to a dedicated channel.
 
 For failures, continue with [Troubleshooting](troubleshooting.md).
+
+## Hosted OAuth configuration
+
+Local `stdio` only needs the bot configuration above. A hosted GuildSpan MCP
+service also uses the Discord application as an OAuth identity provider:
+
+1. Open **OAuth2** in the Discord Developer Portal.
+2. Copy the application ID into `DISCORD_OAUTH_CLIENT_ID`.
+3. Copy the OAuth client secret into `DISCORD_OAUTH_CLIENT_SECRET`. This is not
+   the bot token.
+4. Register `https://your-public-host/auth/callback` as an exact redirect URI.
+5. Set `GUILDSPAN_PUBLIC_BASE_URL=https://your-public-host` without `/mcp`.
+
+GuildSpan requests only `identify` and `guilds` for the human login. The bot
+continues to make all Discord content and action calls with the centrally
+managed `DISCORD_BOT_TOKEN`; a user's OAuth token is used only for identity,
+guild membership, and bootstrap permission checks.

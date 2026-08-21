@@ -26,14 +26,16 @@ connection string in `alembic.ini`.
 - `users` stores the Discord identity used during onboarding.
 - `guild_installations` stores the servers where the GuildSpan bot is installed.
 - `user_guild_access` is the explicit many-to-many authorization boundary.
+- `oauth_state` stores FastMCP OAuth registrations and token state. Values are
+  encrypted by the application before PostgreSQL receives them.
 
 Installations and access grants are revoked using timestamps and status fields
 instead of destructive deletion. Discord snowflakes are stored as strings so
 they remain exact across Python, PostgreSQL, JSON, and JavaScript clients.
 
-OAuth provider tokens and authorization-server state are intentionally not part
-of this first migration. Their storage contract will be added with the OAuth
-integration rather than guessed in advance.
+The hosted runtime derives OAuth-state encryption and GuildSpan JWT signing from
+`GUILDSPAN_AUTH_SECRET`. Keep this secret stable and private. Rotating it
+requires current sessions and OAuth state to be re-established.
 
 ## Migrations
 

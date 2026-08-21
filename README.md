@@ -6,7 +6,7 @@ GuildSpan connects AI agents to Discord communities through MCP. It exposes Disc
 
 It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, rich message and media inspection, secure attachment downloads, message search, sending text, files, and stickers, editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
-The repository is not yet a hosted public service or marketplace plugin. It includes both the established local runtime and an HTTP application that is being prepared for authenticated hosting.
+The repository is not yet a managed public service or marketplace plugin. It includes the established local runtime and an authenticated HTTP application that can be deployed as a standard remote MCP server.
 
 GuildSpan is an independent open-source project and is not affiliated with or endorsed by Discord.
 
@@ -108,21 +108,29 @@ Discord setup lives in [docs/discord-setup.md](docs/discord-setup.md).
 - `discord_create_thread` is implemented.
 - `discord_add_reaction` is implemented.
 - Local `stdio` and Streamable HTTP runtimes are supported.
+- The HTTP runtime supports MCP OAuth 2.1 discovery with Discord as the upstream identity provider.
+- Hosted guild access is persisted per Discord user and checked on every guild-scoped tool call.
 - Guild-level access policy is supported through `DISCORD_ALLOWED_GUILDS`.
 - Configurable branded message attribution is supported.
 - Installation snippets are included for Codex, Claude, and Cursor.
 
-## Planned Flow
+## Runtime Flow
 
 ```text
-MCP client
-  -> local stdio or Streamable HTTP /mcp
+Any MCP client
+  -> local stdio
+  OR
+  -> Streamable HTTP /mcp
+     -> standard MCP OAuth discovery
+     -> browser consent and Discord login
 GuildSpan tools
-  -> validates config and policy
+  -> validates operator allowlist and per-user guild access
   -> calls Discord REST API with a bot token
 Discord
   -> returns API response
 ```
+
+The hosted protocol is not coupled to Codex, Claude, Cursor, or another client. A compatible client only needs the remote `/mcp` URL and standard OAuth support.
 
 ## Local Setup
 
@@ -318,7 +326,7 @@ Do not assume this repository auto-installs itself as a marketplace plugin. It m
 
 ## HTTP Runtime
 
-GuildSpan also exposes a Streamable HTTP application for development of the hosted service:
+GuildSpan exposes a Streamable HTTP application. Without hosted authentication it is intentionally restricted to a loopback host for local development:
 
 ```bash
 GUILDSPAN_HTTP_HOST=127.0.0.1 \
@@ -333,17 +341,47 @@ The application exposes:
 
 `PORT` is accepted as an alternative to `GUILDSPAN_HTTP_PORT`. The default host is `127.0.0.1`, so the development server is not exposed to other machines unless explicitly configured.
 
-The HTTP runtime does not yet implement the planned OAuth 2.1 user flow. Do not expose it to the public internet with write-capable Discord tools until authentication and per-user guild authorization are in place.
+For a remote deployment, first add this exact redirect to the Discord application's OAuth2 configuration:
+
+```text
+https://your-guildspan-host.example/auth/callback
+```
+
+Then configure and migrate the service:
+
+```env
+DISCORD_BOT_TOKEN=your-centrally-managed-bot-token
+DISCORD_ALLOWED_GUILDS=123456789012345678
+DATABASE_URL=postgresql://user:password@host:5432/guildspan
+GUILDSPAN_AUTH_ENABLED=true
+GUILDSPAN_PUBLIC_BASE_URL=https://your-guildspan-host.example
+DISCORD_OAUTH_CLIENT_ID=your-discord-application-id
+DISCORD_OAUTH_CLIENT_SECRET=your-discord-oauth-client-secret
+GUILDSPAN_AUTH_SECRET=a-random-secret-containing-at-least-32-characters
+GUILDSPAN_HTTP_HOST=0.0.0.0
+```
+
+Generate `GUILDSPAN_AUTH_SECRET` with a cryptographically secure secret generator; it signs GuildSpan access tokens and derives encryption for persisted OAuth state. Run `.venv/bin/alembic upgrade head` before startup.
+
+Hosted clients discover OAuth 2.1 metadata from the service and perform browser-based authorization with Discord scopes `identify` and `guilds`. The bot token never leaves the service. On a user's first guild-scoped request, GuildSpan requires all of the following:
+
+- The guild is in `DISCORD_ALLOWED_GUILDS`.
+- The user is currently a member of the guild.
+- The GuildSpan bot is installed and can access the guild.
+- If no grant exists yet, the user owns the guild or has Discord's **Manage Server** permission.
+
+That first eligible request records the installation and user grant. Later requests still require current guild membership and the active persisted grant. This bootstrap can later be replaced or extended by a management platform without changing the MCP/OAuth contract. See [Hosted authentication](docs/hosted-auth.md).
 
 ## Persistence
 
-The hosted architecture uses PostgreSQL through async SQLAlchemy and psycopg 3.
-Persistence is optional for the local `stdio` runtime and is not yet used to
-authenticate HTTP requests. The initial schema stores:
+The hosted architecture uses PostgreSQL through async SQLAlchemy, psycopg 3,
+and asyncpg-backed OAuth state storage. Persistence remains optional for the
+local `stdio` runtime. The schema stores:
 
 - Discord-backed GuildSpan users.
 - GuildSpan bot installations in Discord servers.
 - Explicit active or revoked user access to installed servers.
+- Encrypted OAuth registrations, grants, and upstream token state.
 
 Configure a PostgreSQL connection and apply the schema with:
 

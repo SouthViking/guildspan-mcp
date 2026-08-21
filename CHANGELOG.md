@@ -14,11 +14,14 @@ style sections and uses conventional commits for commit messages.
 - Explicit local `guildspan.local` runtime while preserving `python -m guildspan.server` compatibility.
 - Async PostgreSQL persistence with SQLAlchemy and psycopg 3 for users, Discord guild installations, and per-user guild authorization.
 - Alembic configuration and an initial reversible database migration.
+- Generic MCP OAuth 2.1 discovery and authorization endpoints with Discord `identify` and `guilds` login for the hosted HTTP runtime.
+- Encrypted PostgreSQL OAuth state, per-request Discord guild membership checks, and owner/Manage Server bootstrap of persisted guild access.
 
 ### Changed
 
 - Messages with a configured actor now include a leading visual spacer between Discord's native bot header and the actor label.
 - Access policy is now guild-scoped through `DISCORD_ALLOWED_GUILDS`; channel access is delegated to Discord role and channel permissions.
+- Unauthenticated HTTP can bind only to loopback; public HTTP startup requires explicit hosted-auth configuration and a non-empty guild allowlist.
 
 ## [0.1.0] - 2026-07-21
 

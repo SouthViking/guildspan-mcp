@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,6 +13,16 @@ DEFAULT_MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 DEFAULT_MAX_UPLOAD_TOTAL_BYTES = 24 * 1024 * 1024
 DEFAULT_ATTRIBUTION_TEXT = "sent using GuildSpan"
+
+
+@dataclass(frozen=True)
+class HostedAuthSettings:
+    """Validated settings required by the hosted OAuth runtime."""
+
+    public_base_url: str
+    discord_client_id: str
+    discord_client_secret: str
+    auth_secret: str
 
 
 class Settings(BaseSettings):
@@ -63,6 +75,26 @@ class Settings(BaseSettings):
         default=10,
         ge=0,
         validation_alias="GUILDSPAN_DATABASE_MAX_OVERFLOW",
+    )
+    auth_enabled: bool = Field(
+        default=False,
+        validation_alias="GUILDSPAN_AUTH_ENABLED",
+    )
+    public_base_url: str | None = Field(
+        default=None,
+        validation_alias="GUILDSPAN_PUBLIC_BASE_URL",
+    )
+    discord_oauth_client_id: str | None = Field(
+        default=None,
+        validation_alias="DISCORD_OAUTH_CLIENT_ID",
+    )
+    discord_oauth_client_secret: str | None = Field(
+        default=None,
+        validation_alias="DISCORD_OAUTH_CLIENT_SECRET",
+    )
+    auth_secret: str | None = Field(
+        default=None,
+        validation_alias="GUILDSPAN_AUTH_SECRET",
     )
     http_host: str = Field(
         default="127.0.0.1",
@@ -134,6 +166,67 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL is required for persistent GuildSpan data")
         return database_url
 
+    def require_hosted_auth_settings(self) -> HostedAuthSettings:
+        """Validate and return the hosted OAuth configuration."""
+
+        public_base_url = _required_setting(
+            self.public_base_url,
+            "GUILDSPAN_PUBLIC_BASE_URL",
+        ).rstrip("/")
+        parsed_url = urlsplit(public_base_url)
+        if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+            raise ValueError(
+                "GUILDSPAN_PUBLIC_BASE_URL must be an absolute HTTP(S) URL"
+            )
+        if (
+            parsed_url.path not in {"", "/"}
+            or parsed_url.query
+            or parsed_url.fragment
+            or parsed_url.username is not None
+        ):
+            raise ValueError(
+                "GUILDSPAN_PUBLIC_BASE_URL must contain only the public origin"
+            )
+        if parsed_url.scheme != "https" and parsed_url.hostname not in {
+            "localhost",
+            "127.0.0.1",
+            "::1",
+        }:
+            raise ValueError(
+                "GUILDSPAN_PUBLIC_BASE_URL must use HTTPS outside local development"
+            )
+
+        discord_client_id = _required_setting(
+            self.discord_oauth_client_id,
+            "DISCORD_OAUTH_CLIENT_ID",
+        )
+        discord_client_secret = _required_setting(
+            self.discord_oauth_client_secret,
+            "DISCORD_OAUTH_CLIENT_SECRET",
+        )
+        auth_secret = _required_setting(
+            self.auth_secret,
+            "GUILDSPAN_AUTH_SECRET",
+        )
+        if len(auth_secret) < 32:
+            raise ValueError(
+                "GUILDSPAN_AUTH_SECRET must contain at least 32 characters"
+            )
+        if not self.allowed_guild_ids:
+            raise ValueError(
+                "DISCORD_ALLOWED_GUILDS must contain at least one guild when hosted "
+                "authentication is enabled"
+            )
+
+        _required_setting(self.discord_bot_token, "DISCORD_BOT_TOKEN")
+        self.require_database_url()
+        return HostedAuthSettings(
+            public_base_url=public_base_url,
+            discord_client_id=discord_client_id,
+            discord_client_secret=discord_client_secret,
+            auth_secret=auth_secret,
+        )
+
 
 def load_settings() -> Settings:
     """Load settings from environment variables and an optional local .env file."""
@@ -157,4 +250,11 @@ def _normalized_or_none(raw_value: str | None) -> str | None:
     normalized = raw_value.strip()
     if not normalized:
         return None
+    return normalized
+
+
+def _required_setting(raw_value: str | None, variable_name: str) -> str:
+    normalized = _normalized_or_none(raw_value)
+    if normalized is None:
+        raise ValueError(f"{variable_name} is required when hosted auth is enabled")
     return normalized

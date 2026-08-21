@@ -5,6 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Protocol
 
+from fastmcp.server.dependencies import get_access_token, get_context
+
+from guildspan.authorization import GuildAuthorizationService
 from guildspan.config import Settings, load_settings
 from guildspan.discord_client import (
     DiscordChannel,
@@ -112,22 +115,25 @@ async def assert_channel_is_allowed(
     """Validate that a channel belongs to an allowed guild."""
 
     allowed_guilds = settings.allowed_guild_ids
-    if not allowed_guilds:
+    token = get_access_token()
+    if not allowed_guilds and token is None:
         return
 
     channel = await client.get_channel(channel_id)
     guild_id = channel.guild_id
     if guild_id is None:
         raise DiscordPermissionError(
-            f"Channel {channel_id} is not a guild channel and DISCORD_ALLOWED_GUILDS is set."
+            f"Channel {channel_id} is not a Discord guild channel."
         )
-    if guild_id not in allowed_guilds:
+    if allowed_guilds and guild_id not in allowed_guilds:
         raise DiscordPermissionError(
             f"Guild {guild_id} for channel {channel_id} is not in DISCORD_ALLOWED_GUILDS."
         )
+    if token is not None:
+        await _hosted_authorization().authorize(guild_id=guild_id, token=token)
 
 
-def assert_guild_is_allowed(*, guild_id: str, settings: Settings) -> None:
+async def assert_guild_is_allowed(*, guild_id: str, settings: Settings) -> None:
     """Validate that a guild is allowed by the local policy."""
 
     allowed_guilds = settings.allowed_guild_ids
@@ -135,6 +141,25 @@ def assert_guild_is_allowed(*, guild_id: str, settings: Settings) -> None:
         raise DiscordPermissionError(
             f"Guild {guild_id} is not in DISCORD_ALLOWED_GUILDS."
         )
+    token = get_access_token()
+    if token is not None:
+        await _hosted_authorization().authorize(guild_id=guild_id, token=token)
+
+
+def _hosted_authorization() -> GuildAuthorizationService:
+    try:
+        context = get_context()
+    except RuntimeError as error:
+        raise DiscordConfigurationError(
+            "Hosted guild authorization requires an active MCP request."
+        ) from error
+
+    service = context.lifespan_context.get("guild_authorization")
+    if not isinstance(service, GuildAuthorizationService):
+        raise DiscordConfigurationError(
+            "Hosted guild authorization is not initialized."
+        )
+    return service
 
 
 def required_id(value: str, name: str) -> str:

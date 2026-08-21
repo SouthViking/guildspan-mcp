@@ -179,3 +179,4 @@ def test_initial_alembic_migration_renders_postgres_sql() -> None:
     assert "CREATE TABLE users" in result.stdout
     assert "CREATE TABLE guild_installations" in result.stdout
     assert "CREATE TABLE user_guild_access" in result.stdout
+    assert "CREATE TABLE oauth_state" in result.stdout

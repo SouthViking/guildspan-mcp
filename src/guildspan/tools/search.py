@@ -153,7 +153,7 @@ async def _resolve_search_channel_ids(
         return normalized_channel_ids
 
     normalized_guild_id = _resolve_guild_id(guild_id=guild_id, settings=settings)
-    assert_guild_is_allowed(guild_id=normalized_guild_id, settings=settings)
+    await assert_guild_is_allowed(guild_id=normalized_guild_id, settings=settings)
     channels = await client.list_guild_channels(normalized_guild_id)
     return [channel.id for channel in channels]
 

@@ -73,7 +73,10 @@ async def _discord_list_channels(
         guild_id=guild_id, settings=resolved_settings
     )
     bot_token = require_bot_token(resolved_settings)
-    assert_guild_is_allowed(guild_id=normalized_guild_id, settings=resolved_settings)
+    await assert_guild_is_allowed(
+        guild_id=normalized_guild_id,
+        settings=resolved_settings,
+    )
 
     managed_client = client is None
     discord_client = client or build_client(bot_token=bot_token)

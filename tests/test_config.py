@@ -27,6 +27,8 @@ def test_settings_can_be_constructed_without_discord_token() -> None:
     assert settings.database_echo is False
     assert settings.database_pool_size == 5
     assert settings.database_max_overflow == 10
+    assert settings.auth_enabled is False
+    assert settings.public_base_url is None
 
 
 def test_load_settings_returns_settings() -> None:
@@ -76,6 +78,46 @@ def test_database_url_is_optional_until_persistence_is_used() -> None:
 
     with pytest.raises(ValueError, match="DATABASE_URL is required"):
         settings.require_database_url()
+
+
+def test_hosted_auth_settings_require_complete_secure_configuration() -> None:
+    settings = make_settings(
+        discord_bot_token="bot-token",
+        DATABASE_URL="postgresql://user:pass@db/guildspan",
+        GUILDSPAN_PUBLIC_BASE_URL="https://guildspan.example.com/",
+        DISCORD_OAUTH_CLIENT_ID="discord-app",
+        DISCORD_OAUTH_CLIENT_SECRET="oauth-secret",
+        GUILDSPAN_AUTH_SECRET="x" * 32,
+        discord_allowed_guilds="guild-1",
+    )
+
+    auth = settings.require_hosted_auth_settings()
+
+    assert auth.public_base_url == "https://guildspan.example.com"
+    assert auth.discord_client_id == "discord-app"
+    assert auth.auth_secret == "x" * 32
+
+
+def test_hosted_auth_requires_allowlist_and_https() -> None:
+    base = {
+        "discord_bot_token": "bot-token",
+        "DATABASE_URL": "postgresql://user:pass@db/guildspan",
+        "DISCORD_OAUTH_CLIENT_ID": "discord-app",
+        "DISCORD_OAUTH_CLIENT_SECRET": "oauth-secret",
+        "GUILDSPAN_AUTH_SECRET": "x" * 32,
+    }
+    with pytest.raises(ValueError, match="HTTPS"):
+        make_settings(
+            **base,
+            GUILDSPAN_PUBLIC_BASE_URL="http://guildspan.example.com",
+            discord_allowed_guilds="guild-1",
+        ).require_hosted_auth_settings()
+
+    with pytest.raises(ValueError, match="DISCORD_ALLOWED_GUILDS"):
+        make_settings(
+            **base,
+            GUILDSPAN_PUBLIC_BASE_URL="https://guildspan.example.com",
+        ).require_hosted_auth_settings()
 
 
 def test_blank_default_guild_id_is_normalized_to_none() -> None:

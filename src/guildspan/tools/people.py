@@ -156,7 +156,10 @@ async def _discord_get_member(
         guild_id=guild_id,
         settings=resolved_settings,
     )
-    assert_guild_is_allowed(guild_id=normalized_guild_id, settings=resolved_settings)
+    await assert_guild_is_allowed(
+        guild_id=normalized_guild_id,
+        settings=resolved_settings,
+    )
     bot_token = require_bot_token(resolved_settings)
     managed_client = client is None
     discord_client = client or _build_people_client(bot_token=bot_token)
@@ -203,7 +206,10 @@ async def _discord_search_members(
         guild_id=guild_id,
         settings=resolved_settings,
     )
-    assert_guild_is_allowed(guild_id=normalized_guild_id, settings=resolved_settings)
+    await assert_guild_is_allowed(
+        guild_id=normalized_guild_id,
+        settings=resolved_settings,
+    )
     bot_token = require_bot_token(resolved_settings)
     managed_client = client is None
     discord_client = client or _build_people_client(bot_token=bot_token)
@@ -246,7 +252,10 @@ async def _discord_list_roles(
         guild_id=guild_id,
         settings=resolved_settings,
     )
-    assert_guild_is_allowed(guild_id=normalized_guild_id, settings=resolved_settings)
+    await assert_guild_is_allowed(
+        guild_id=normalized_guild_id,
+        settings=resolved_settings,
+    )
     bot_token = require_bot_token(resolved_settings)
     managed_client = client is None
     discord_client = client or _build_people_client(bot_token=bot_token)

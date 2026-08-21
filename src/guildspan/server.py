@@ -1,6 +1,10 @@
 """FastMCP server construction and tool registration."""
 
+from typing import Any
+
 from fastmcp import FastMCP
+from fastmcp.server.auth import AuthProvider
+from fastmcp.server.server import LifespanCallable
 
 from guildspan.tools.attachments import discord_download_attachment
 from guildspan.tools.channels import discord_get_channel, discord_list_channels
@@ -19,10 +23,14 @@ from guildspan.tools.search import discord_search_messages
 from guildspan.tools.threads import discord_create_thread
 
 
-def create_server() -> FastMCP:
+def create_server(
+    *,
+    auth: AuthProvider | None = None,
+    lifespan: LifespanCallable[dict[str, Any]] | None = None,
+) -> FastMCP:
     """Create and configure the GuildSpan server."""
 
-    mcp = FastMCP("GuildSpan")
+    mcp = FastMCP("GuildSpan", auth=auth, lifespan=lifespan)
     mcp.tool(discord_health_check)
     mcp.tool(discord_list_channels)
     mcp.tool(discord_get_channel)

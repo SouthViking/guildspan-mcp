@@ -60,18 +60,20 @@ async def _discord_health_check(
 
     try:
         if normalized_guild_id is not None:
+            guild_allowed = False
             try:
-                assert_guild_is_allowed(
+                await assert_guild_is_allowed(
                     guild_id=normalized_guild_id,
                     settings=resolved_settings,
                 )
+                guild_allowed = True
                 checks.append(
                     _ok_check("guild_policy", "Guild is allowed by local policy.")
                 )
             except GuildSpanError as error:
                 checks.append(_failed_check("guild_policy", str(error)))
 
-            if include_channel_sample:
+            if include_channel_sample and guild_allowed:
                 try:
                     channels = await discord_client.list_guild_channels(
                         normalized_guild_id

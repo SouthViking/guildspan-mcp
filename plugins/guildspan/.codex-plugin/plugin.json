@@ -1,6 +1,6 @@
 {
   "name": "guildspan",
-  "version": "0.1.0+codex.20260824221051",
+  "version": "0.1.0+codex.20260824223504",
   "description": "Connect AI workflows to authorized Discord communities through GuildSpan.",
   "author": {
     "name": "SouthViking",
@@ -31,7 +31,7 @@
     ],
     "websiteURL": "https://github.com/SouthViking/guildspan-mcp",
     "defaultPrompt": [
-      "Show me the Discord channels I can access",
+      "Show me the Discord servers I can access",
       "Find recent Discord messages about a topic",
       "Create a Discord thread with a concise summary"
     ],

@@ -7,6 +7,7 @@ import pytest
 from fastmcp.server.auth import AccessToken
 
 from guildspan.authorization import (
+    DISCORD_GUILD_PAGE_SIZE,
     MANAGE_GUILD_PERMISSION,
     BotGuildVerifierProtocol,
     DiscordIdentityClient,
@@ -15,7 +16,7 @@ from guildspan.authorization import (
     GuildAuthorizationService,
 )
 from guildspan.config import Settings
-from guildspan.errors import DiscordPermissionError
+from guildspan.errors import DiscordApiError, DiscordPermissionError
 from guildspan.persistence import (
     Base,
     Database,
@@ -43,9 +44,26 @@ async def create_test_database() -> Database:
 
 
 class FakeIdentityClient(DiscordIdentityClientProtocol):
-    def __init__(self, guild: DiscordOAuthGuild | None) -> None:
+    def __init__(
+        self,
+        guild: DiscordOAuthGuild | None,
+        *,
+        guilds: list[DiscordOAuthGuild] | None = None,
+    ) -> None:
         self.guild = guild
+        self.guilds = guilds
         self.calls: list[tuple[str, str]] = []
+        self.list_calls: list[str] = []
+
+    async def list_guilds(
+        self,
+        *,
+        access_token: str,
+    ) -> list[DiscordOAuthGuild]:
+        self.list_calls.append(access_token)
+        if self.guilds is not None:
+            return self.guilds
+        return [] if self.guild is None else [self.guild]
 
     async def get_guild(
         self,
@@ -58,11 +76,14 @@ class FakeIdentityClient(DiscordIdentityClientProtocol):
 
 
 class FakeBotVerifier(BotGuildVerifierProtocol):
-    def __init__(self) -> None:
+    def __init__(self, *, inaccessible: set[str] | None = None) -> None:
         self.calls: list[str] = []
+        self.inaccessible = inaccessible or set()
 
     async def verify(self, guild_id: str) -> None:
         self.calls.append(guild_id)
+        if guild_id in self.inaccessible:
+            raise DiscordApiError("bot cannot access guild")
 
 
 def access_token(*, user_id: str = "user-1") -> AccessToken:
@@ -205,6 +226,96 @@ async def test_authorization_rejects_guild_outside_operator_allowlist() -> None:
 
 
 @pytest.mark.asyncio
+async def test_list_available_guilds_returns_only_authorized_or_eligible() -> None:
+    database = await create_test_database()
+    identity = FakeIdentityClient(
+        None,
+        guilds=[
+            DiscordOAuthGuild(
+                id="guild-authorized",
+                name="Authorized",
+                icon_url=None,
+                owner=False,
+                permissions=0,
+            ),
+            DiscordOAuthGuild(
+                id="guild-eligible",
+                name="Eligible",
+                icon_url="https://example.com/eligible.png",
+                owner=False,
+                permissions=MANAGE_GUILD_PERMISSION,
+            ),
+            DiscordOAuthGuild(
+                id="guild-unprivileged",
+                name="Unprivileged",
+                icon_url=None,
+                owner=False,
+                permissions=0,
+            ),
+            DiscordOAuthGuild(
+                id="guild-bot-missing",
+                name="Bot Missing",
+                icon_url=None,
+                owner=True,
+                permissions=0,
+            ),
+            DiscordOAuthGuild(
+                id="guild-not-allowed",
+                name="Not Allowed",
+                icon_url=None,
+                owner=True,
+                permissions=0,
+            ),
+        ],
+    )
+    verifier = FakeBotVerifier(inaccessible={"guild-bot-missing"})
+    service = GuildAuthorizationService(
+        settings=make_settings(
+            discord_allowed_guilds=(
+                "guild-authorized,guild-eligible,guild-unprivileged,"
+                "guild-bot-missing"
+            )
+        ),
+        database=database,
+        identity_client=identity,
+        bot_verifier=verifier,
+    )
+
+    try:
+        async with database.session() as session:
+            user = await UserRepository(session).upsert(discord_user_id="user-1")
+            installation = await GuildInstallationRepository(session).install(
+                discord_guild_id="guild-authorized",
+                name="Authorized",
+                installed_by_user_id=user.id,
+            )
+            await GuildAccessRepository(session).grant(
+                user_id=user.id,
+                guild_installation_id=installation.id,
+            )
+
+        guilds = await service.list_available_guilds(token=access_token())
+
+        assert [(guild.id, guild.status) for guild in guilds] == [
+            ("guild-authorized", "authorized"),
+            ("guild-eligible", "eligible_to_initialize"),
+        ]
+        assert verifier.calls == [
+            "guild-authorized",
+            "guild-eligible",
+            "guild-bot-missing",
+        ]
+        async with database.session() as session:
+            stored_user = await UserRepository(session).get_by_discord_id("user-1")
+            assert stored_user is not None
+            assert await GuildAccessRepository(session).list_active_guild_ids(
+                stored_user.id
+            ) == ["guild-authorized"]
+    finally:
+        await database.dispose()
+
+
+@pytest.mark.asyncio
 async def test_discord_identity_client_sends_bearer_token_and_parses_guild() -> None:
     requests: list[httpx.Request] = []
 
@@ -224,11 +335,11 @@ async def test_discord_identity_client_sends_bearer_token_and_parses_guild() -> 
         )
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
-        guild = await DiscordIdentityClient(client).get_guild(
+        guilds = await DiscordIdentityClient(client).list_guilds(
             access_token="secret-user-token",
-            guild_id="guild-1",
         )
 
+    guild = guilds[0]
     assert guild is not None
     assert guild.owner is True
     assert guild.can_bootstrap_access is True
@@ -237,3 +348,44 @@ async def test_discord_identity_client_sends_bearer_token_and_parses_guild() -> 
     )
     assert requests[0].headers["Authorization"] == "Bearer secret-user-token"
     assert requests[0].url.params["limit"] == "200"
+
+
+@pytest.mark.asyncio
+async def test_discord_identity_client_paginates_guilds() -> None:
+    requests: list[httpx.Request] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if len(requests) == 1:
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": str(index),
+                        "name": f"Guild {index}",
+                        "owner": False,
+                        "permissions": "0",
+                    }
+                    for index in range(DISCORD_GUILD_PAGE_SIZE)
+                ],
+            )
+        return httpx.Response(
+            200,
+            json=[
+                {
+                    "id": "final",
+                    "name": "Final Guild",
+                    "owner": True,
+                    "permissions": "0",
+                }
+            ],
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+        guilds = await DiscordIdentityClient(client).list_guilds(
+            access_token="secret-user-token"
+        )
+
+    assert len(guilds) == DISCORD_GUILD_PAGE_SIZE + 1
+    assert requests[0].url.params.get("after") is None
+    assert requests[1].url.params["after"] == str(DISCORD_GUILD_PAGE_SIZE - 1)

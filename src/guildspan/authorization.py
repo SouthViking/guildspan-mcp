@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol, TypedDict, cast
+from typing import Literal, Protocol, TypedDict, cast
 
 import httpx
 from fastmcp.server.auth import AccessToken
@@ -26,6 +26,7 @@ from guildspan.persistence import (
 DISCORD_API_BASE_URL = "https://discord.com/api/v10"
 ADMINISTRATOR_PERMISSION = 1 << 3
 MANAGE_GUILD_PERMISSION = 1 << 5
+DISCORD_GUILD_PAGE_SIZE = 200
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,17 @@ class DiscordOAuthGuild:
         return self.owner or bool(self.permissions & required)
 
 
+@dataclass(frozen=True)
+class DiscordGuildAccess:
+    """One guild the authenticated user may select in GuildSpan."""
+
+    id: str
+    name: str
+    icon_url: str | None
+    owner: bool
+    status: Literal["authorized", "eligible_to_initialize"]
+
+
 class DiscordProfile(TypedDict):
     """Profile fields accepted by the user repository."""
 
@@ -57,6 +69,13 @@ class DiscordProfile(TypedDict):
 
 class DiscordIdentityClientProtocol(Protocol):
     """Discord user-token operation required by hosted authorization."""
+
+    async def list_guilds(
+        self,
+        *,
+        access_token: str,
+    ) -> list[DiscordOAuthGuild]:
+        """Return guilds visible to the current Discord user."""
 
     async def get_guild(
         self,
@@ -80,6 +99,54 @@ class DiscordIdentityClient:
     def __init__(self, http_client: httpx.AsyncClient) -> None:
         self._http_client = http_client
 
+    async def list_guilds(
+        self,
+        *,
+        access_token: str,
+    ) -> list[DiscordOAuthGuild]:
+        """Return all guilds visible to the current Discord user."""
+
+        guilds: list[DiscordOAuthGuild] = []
+        after: str | None = None
+
+        while True:
+            params: dict[str, str | int] = {"limit": DISCORD_GUILD_PAGE_SIZE}
+            if after is not None:
+                params["after"] = after
+            response = await self._http_client.get(
+                f"{DISCORD_API_BASE_URL}/users/@me/guilds",
+                headers={"Authorization": f"Bearer {access_token}"},
+                params=params,
+            )
+            if not response.is_success:
+                raise DiscordApiError(
+                    "Discord could not validate the authenticated user's guilds "
+                    f"(status {response.status_code})."
+                )
+
+            payload = response.json()
+            if not isinstance(payload, list):
+                raise DiscordApiError(
+                    "Discord returned an invalid current-user guild response."
+                )
+
+            page: list[DiscordOAuthGuild] = []
+            for raw_guild in payload:
+                if not isinstance(raw_guild, dict):
+                    raise DiscordApiError(
+                        "Discord returned an invalid guild in the current-user list."
+                    )
+                page.append(_parse_oauth_guild(cast(dict[str, object], raw_guild)))
+            guilds.extend(page)
+
+            if len(payload) < DISCORD_GUILD_PAGE_SIZE:
+                return guilds
+            if not page or page[-1].id == after:
+                raise DiscordApiError(
+                    "Discord returned invalid pagination for current-user guilds."
+                )
+            after = page[-1].id
+
     async def get_guild(
         self,
         *,
@@ -88,31 +155,10 @@ class DiscordIdentityClient:
     ) -> DiscordOAuthGuild | None:
         """Return a target guild from Discord's current-user guild list."""
 
-        response = await self._http_client.get(
-            f"{DISCORD_API_BASE_URL}/users/@me/guilds",
-            headers={"Authorization": f"Bearer {access_token}"},
-            params={"limit": 200},
-        )
-        if not response.is_success:
-            raise DiscordApiError(
-                "Discord could not validate the authenticated user's guilds "
-                f"(status {response.status_code})."
-            )
-
-        payload = response.json()
-        if not isinstance(payload, list):
-            raise DiscordApiError(
-                "Discord returned an invalid current-user guild response."
-            )
-
-        for raw_guild in payload:
-            if not isinstance(raw_guild, dict):
-                continue
-            guild = cast(dict[str, object], raw_guild)
-            raw_id = guild.get("id")
-            if str(raw_id) != guild_id:
-                continue
-            return _parse_oauth_guild(guild)
+        guilds = await self.list_guilds(access_token=access_token)
+        for guild in guilds:
+            if guild.id == guild_id:
+                return guild
         return None
 
 
@@ -147,6 +193,57 @@ class GuildAuthorizationService:
         self._database = database
         self._identity_client = identity_client
         self._bot_verifier = bot_verifier
+
+    async def list_available_guilds(
+        self,
+        *,
+        token: AccessToken,
+    ) -> list[DiscordGuildAccess]:
+        """List authorized or bootstrap-eligible guilds without changing access."""
+
+        discord_user_id = _discord_user_id(token)
+        visible_guilds = await self._identity_client.list_guilds(
+            access_token=token.token,
+        )
+        allowed_guilds = {
+            guild.id: guild
+            for guild in visible_guilds
+            if guild.id in self._settings.allowed_guild_ids
+        }
+
+        async with self._database.session() as session:
+            user = await UserRepository(session).get_by_discord_id(discord_user_id)
+            authorized_guild_ids = (
+                set(await GuildAccessRepository(session).list_active_guild_ids(user.id))
+                if user is not None and user.is_active
+                else set()
+            )
+
+        available: list[DiscordGuildAccess] = []
+        for guild in allowed_guilds.values():
+            is_authorized = guild.id in authorized_guild_ids
+            if not is_authorized and not guild.can_bootstrap_access:
+                continue
+            try:
+                await self._bot_verifier.verify(guild.id)
+            except (DiscordApiError, DiscordPermissionError):
+                continue
+            available.append(
+                DiscordGuildAccess(
+                    id=guild.id,
+                    name=guild.name,
+                    icon_url=guild.icon_url,
+                    owner=guild.owner,
+                    status=(
+                        "authorized" if is_authorized else "eligible_to_initialize"
+                    ),
+                )
+            )
+
+        return sorted(
+            available,
+            key=lambda guild: (guild.name.casefold(), guild.id),
+        )
 
     async def authorize(self, *, guild_id: str, token: AccessToken) -> None:
         """Authorize one request, bootstrapping an eligible guild when needed."""

@@ -42,6 +42,12 @@ https://guildspan.example.com/auth/callback
    upstream Discord token and the bot token are not exposed to that client.
 6. Guild-scoped tools apply both operator policy and persisted user access.
 
+The read-only `discord_list_guilds` tool discovers selectable servers without
+creating grants. It intersects the current Discord user's guilds with
+`DISCORD_ALLOWED_GUILDS`, existing active grants, bootstrap permissions, and
+live bot access. Results are labeled `authorized` or `eligible_to_initialize`;
+all other guilds are omitted.
+
 Compatible clients may use dynamic client registration or client ID metadata
 documents. A future GuildSpan web platform can manage grants and configuration
 without changing this MCP flow.
@@ -57,6 +63,10 @@ owns the guild or has Discord's **Manage Server** permission and the service bot
 can access the guild. It then records the guild installation and grants that
 user access. Revoked grants remain denied unless an eligible administrator
 bootstraps the guild again.
+
+Guild discovery itself never performs that bootstrap. A later guild-scoped tool
+call against an `eligible_to_initialize` result applies the normal authorization
+flow and records the grant only after every check succeeds.
 
 ## Persistence and secrets
 

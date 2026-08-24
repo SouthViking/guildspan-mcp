@@ -493,6 +493,22 @@ Current behavior:
 - Returns `status`, `guild_id`, `channel_id`, and `checks`.
 - Reports degraded checks in-band instead of failing on the first diagnostic problem.
 
+### `discord_list_guilds`
+
+Inputs: none. This tool requires the hosted OAuth runtime.
+
+Current behavior:
+
+- Lists only operator-allowlisted servers that the authenticated Discord user
+  can already access or is eligible to initialize.
+- Returns `authorized` for active persisted grants and
+  `eligible_to_initialize` when the user owns the server or has **Manage
+  Server**, the bot is accessible, and no grant exists yet.
+- Revalidates current Discord membership and bot access without creating a
+  grant or changing Discord.
+- Omits servers outside `DISCORD_ALLOWED_GUILDS`, inaccessible to the bot, or
+  unavailable to the authenticated user.
+
 ### `discord_list_channels`
 
 Inputs:

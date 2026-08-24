@@ -9,6 +9,9 @@ style sections and uses conventional commits for commit messages.
 
 ### Added
 
+- Hosted `discord_list_guilds` discovery for authorized and bootstrap-eligible
+  Discord servers, filtered by OAuth membership, operator allowlist, persisted
+  grants, bootstrap permissions, and GuildSpan bot access.
 - Development-ready GuildSpan plugin package for Codex and ChatGPT, including
   the production remote MCP connection, install metadata, brand assets, safe
   Discord workflow guidance, and a local marketplace test plan.

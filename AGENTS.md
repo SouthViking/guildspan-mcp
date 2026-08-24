@@ -8,7 +8,7 @@ If a user asks to connect the repository source locally, install it and register
 
 - MCP server name: `guildspan`
 - Transports: local process over `stdio`; Streamable HTTP at `/mcp`
-- Primary tools today: `discord_health_check`, `discord_list_channels`, `discord_get_channel`, `discord_get_current_bot_user`, `discord_get_user`, `discord_get_member`, `discord_search_members`, `discord_list_roles`, `discord_read_messages`, `discord_download_attachment`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
+- Primary tools today: `discord_health_check`, `discord_list_guilds` (hosted OAuth), `discord_list_channels`, `discord_get_channel`, `discord_get_current_bot_user`, `discord_get_user`, `discord_get_member`, `discord_search_members`, `discord_list_roles`, `discord_read_messages`, `discord_download_attachment`, `discord_search_messages`, `discord_send_message`, `discord_edit_own_message`, `discord_create_thread`, `discord_add_reaction`
 
 ## Required Setup
 

@@ -58,8 +58,9 @@ After registering GuildSpan in an MCP client, restart or reload the client and c
 
 1. `discord_health_check`
 2. `discord_get_current_bot_user`
-3. `discord_list_channels`
-4. `discord_read_messages` on a channel visible to the bot
+3. `discord_list_guilds` when using the hosted OAuth runtime
+4. `discord_list_channels` for one returned guild
+5. `discord_read_messages` on a channel visible to the bot
 
 Only after the read checks pass, send a test message to a dedicated channel.
 

@@ -57,3 +57,4 @@ def test_plugin_skill_has_no_scaffold_placeholders() -> None:
 
     assert "[TODO:" not in skill
     assert "Discord bot tokens" in skill
+    assert "discord_list_guilds" in skill

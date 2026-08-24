@@ -15,6 +15,7 @@ from guildspan import __version__
 from guildspan.tools.attachments import discord_download_attachment
 from guildspan.tools.channels import discord_get_channel, discord_list_channels
 from guildspan.tools.diagnostics import discord_health_check
+from guildspan.tools.guilds import discord_list_guilds
 from guildspan.tools.history import discord_read_messages
 from guildspan.tools.messages import discord_edit_own_message, discord_send_message
 from guildspan.tools.people import (
@@ -89,6 +90,17 @@ TOOL_REGISTRATIONS = (
             "Use this to diagnose GuildSpan configuration, authorization, and basic "
             "Discord API access. It only reads status and optional guild or channel "
             "metadata; it does not change Discord."
+        ),
+        annotations=READ_ONLY_TOOL,
+    ),
+    ToolRegistration(
+        handler=discord_list_guilds,
+        title="List available Discord servers",
+        description=(
+            "Use this at the start of a hosted GuildSpan session to discover Discord "
+            "servers the authenticated user can already access or is eligible to "
+            "initialize. It returns only operator-allowlisted servers accessible to "
+            "the GuildSpan bot, and it does not grant access or change Discord."
         ),
         annotations=READ_ONLY_TOOL,
     ),

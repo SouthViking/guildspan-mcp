@@ -7,6 +7,7 @@ from guildspan.server import GUILDSPAN_INSTRUCTIONS, create_server
 
 READ_ONLY_TOOLS = {
     "discord_health_check",
+    "discord_list_guilds",
     "discord_list_channels",
     "discord_get_channel",
     "discord_get_current_bot_user",
@@ -92,6 +93,7 @@ async def test_create_server_registers_discord_send_message_tool() -> None:
 
     assert [tool.name for tool in tools] == [
         "discord_health_check",
+        "discord_list_guilds",
         "discord_list_channels",
         "discord_get_channel",
         "discord_get_current_bot_user",
@@ -124,6 +126,11 @@ async def test_create_server_registers_discord_send_message_tool() -> None:
     assert {
         variant["properties"]["source_type"]["const"] for variant in source_variants
     } == {"path", "url", "base64"}
+
+    guilds_tool = next(tool for tool in tools if tool.name == "discord_list_guilds")
+    assert guilds_tool.description is not None
+    assert "operator-allowlisted" in guilds_tool.description
+    assert "does not grant access" in guilds_tool.description
 
 
 @pytest.mark.asyncio

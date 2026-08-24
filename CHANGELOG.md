@@ -9,6 +9,9 @@ style sections and uses conventional commits for commit messages.
 
 ### Added
 
+- Development-ready GuildSpan plugin package for Codex and ChatGPT, including
+  the production remote MCP connection, install metadata, brand assets, safe
+  Discord workflow guidance, and a local marketplace test plan.
 - Human-readable titles, purpose-specific descriptions, and explicit MCP safety annotations for every Discord tool.
 - Server-level MCP instructions for resolving Discord IDs, handling external writes, avoiding ambiguous retries, and keeping credentials out of tool inputs.
 - `discord_send_message` now accepts the outgoing message `locale` and selects a controlled English, Spanish, or French GuildSpan attribution, with regional-locale normalization and safe English fallback.

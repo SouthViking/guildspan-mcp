@@ -2,7 +2,7 @@
 
 This repository contains an MCP server named `guildspan` with local `stdio` and authenticated hosted Streamable HTTP runtimes.
 
-If a user asks to connect the repository locally, do not treat it as a marketplace plugin. Install it and register the `guildspan` command in the target client. For remote use, configure the standard MCP OAuth HTTP runtime; do not add client-specific authentication behavior.
+If a user asks to connect the repository source locally, install it and register the `guildspan` command in the target client. The separate development plugin package lives in `plugins/guildspan` and targets the hosted OAuth MCP service. For remote use, preserve the standard MCP OAuth HTTP runtime; do not add client-specific authentication behavior to the backend.
 
 ## What This Repo Exposes
 

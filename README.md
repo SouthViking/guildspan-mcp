@@ -6,7 +6,7 @@ GuildSpan connects AI agents to Discord communities through MCP. It exposes Disc
 
 It supports Discord diagnostics, channel inspection, read-only user/member/role lookup, rich message and media inspection, secure attachment downloads, message search, sending text, files, and stickers, editing bot messages, creating threads, and adding reactions through the official Discord REST API using a bot token.
 
-The repository is not yet a managed public service or marketplace plugin. It includes the established local runtime and an authenticated HTTP application that can be deployed as a standard remote MCP server.
+The repository is not yet a managed public service or published marketplace plugin. It includes the established local runtime, an authenticated HTTP application that can be deployed as a standard remote MCP server, and a development-ready plugin package under `plugins/guildspan` for local Codex and ChatGPT testing.
 
 GuildSpan is an independent open-source project and is not affiliated with or endorsed by Discord.
 
@@ -115,6 +115,7 @@ Discord setup lives in [docs/discord-setup.md](docs/discord-setup.md).
 - Guild-level access policy is supported through `DISCORD_ALLOWED_GUILDS`.
 - Configurable branded message attribution is supported.
 - Installation snippets are included for Codex, Claude, and Cursor.
+- A distributable GuildSpan plugin package and repository-local development marketplace are included for Codex and ChatGPT testing.
 
 ## Runtime Flow
 
@@ -133,6 +134,12 @@ Discord
 ```
 
 The hosted protocol is not coupled to Codex, Claude, Cursor, or another client. A compatible client only needs the remote `/mcp` URL and standard OAuth support.
+
+## Plugin development
+
+The installable development package lives in [`plugins/guildspan`](plugins/guildspan). It bundles professional marketplace metadata, GuildSpan brand assets, a remote MCP connection to the hosted service, and focused Discord workflow guidance. The generic MCP backend remains independent of Codex and ChatGPT.
+
+See [Plugin development](docs/plugin-development.md) for local installation and validation, and [Plugin test plan](docs/plugin-test-plan.md) for the positive and negative acceptance cases required before public submission.
 
 ## Local Setup
 

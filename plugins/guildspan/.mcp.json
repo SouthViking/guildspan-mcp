@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "guildspan": {
+      "type": "http",
+      "url": "https://guildspan-mcp-production.up.railway.app/mcp",
+      "oauth_resource": "https://guildspan-mcp-production.up.railway.app/mcp"
+    }
+  }
+}

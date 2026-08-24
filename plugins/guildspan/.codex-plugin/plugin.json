@@ -1,0 +1,42 @@
+{
+  "name": "guildspan",
+  "version": "0.1.0+codex.20260824221051",
+  "description": "Connect AI workflows to authorized Discord communities through GuildSpan.",
+  "author": {
+    "name": "SouthViking",
+    "url": "https://github.com/SouthViking"
+  },
+  "homepage": "https://github.com/SouthViking/guildspan-mcp",
+  "repository": "https://github.com/SouthViking/guildspan-mcp",
+  "license": "MIT",
+  "keywords": [
+    "discord",
+    "mcp",
+    "communities",
+    "collaboration",
+    "automation"
+  ],
+  "skills": "./skills/",
+  "apps": "./.app.json",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "GuildSpan",
+    "shortDescription": "Connect AI workflows to Discord communities",
+    "longDescription": "GuildSpan gives ChatGPT and Codex a secure, structured connection to authorized Discord communities for discovering context, collaborating, and taking deliberate actions.",
+    "developerName": "SouthViking",
+    "category": "Communication",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/SouthViking/guildspan-mcp",
+    "defaultPrompt": [
+      "Show me the Discord channels I can access",
+      "Find recent Discord messages about a topic",
+      "Create a Discord thread with a concise summary"
+    ],
+    "brandColor": "#9B9BC4",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png"
+  }
+}

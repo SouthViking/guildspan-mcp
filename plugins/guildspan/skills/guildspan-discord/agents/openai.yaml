@@ -1,0 +1,4 @@
+interface:
+  display_name: "GuildSpan for Discord"
+  short_description: "Work safely across authorized Discord communities"
+  default_prompt: "Use GuildSpan to inspect Discord context and carry out the exact authorized action I request."

@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
+import math
+import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Literal, Protocol, TypedDict, cast
 
@@ -27,6 +32,8 @@ DISCORD_API_BASE_URL = "https://discord.com/api/v10"
 ADMINISTRATOR_PERMISSION = 1 << 3
 MANAGE_GUILD_PERMISSION = 1 << 5
 DISCORD_GUILD_PAGE_SIZE = 200
+OAUTH_GUILD_CACHE_TTL_SECONDS = 30.0
+MAX_OAUTH_RATE_LIMIT_RETRY_SECONDS = 5.0
 
 
 @dataclass(frozen=True)
@@ -56,6 +63,14 @@ class DiscordGuildAccess:
     icon_url: str | None
     owner: bool
     status: Literal["authorized", "eligible_to_initialize"]
+
+
+@dataclass(frozen=True)
+class _GuildCacheEntry:
+    """Short-lived Discord OAuth guild discovery result."""
+
+    guilds: tuple[DiscordOAuthGuild, ...]
+    expires_at: float
 
 
 class DiscordProfile(TypedDict):
@@ -92,12 +107,28 @@ class BotGuildVerifierProtocol(Protocol):
     async def verify(self, guild_id: str) -> None:
         """Raise if the GuildSpan bot cannot access the guild."""
 
+    async def verify_member(self, *, guild_id: str, user_id: str) -> None:
+        """Raise if one user is no longer a member of the guild."""
+
 
 class DiscordIdentityClient:
     """Read the current user's Discord guilds with their OAuth access token."""
 
-    def __init__(self, http_client: httpx.AsyncClient) -> None:
+    def __init__(
+        self,
+        http_client: httpx.AsyncClient,
+        *,
+        cache_ttl_seconds: float = OAUTH_GUILD_CACHE_TTL_SECONDS,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        monotonic: Callable[[], float] = time.monotonic,
+    ) -> None:
         self._http_client = http_client
+        self._cache_ttl_seconds = cache_ttl_seconds
+        self._sleep = sleep
+        self._monotonic = monotonic
+        self._cache: dict[str, _GuildCacheEntry] = {}
+        self._inflight: dict[str, asyncio.Task[list[DiscordOAuthGuild]]] = {}
+        self._cache_lock = asyncio.Lock()
 
     async def list_guilds(
         self,
@@ -106,6 +137,44 @@ class DiscordIdentityClient:
     ) -> list[DiscordOAuthGuild]:
         """Return all guilds visible to the current Discord user."""
 
+        cache_key = hashlib.sha256(access_token.encode("utf-8")).hexdigest()
+        now = self._monotonic()
+        async with self._cache_lock:
+            self._prune_expired_cache(now)
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return list(cached.guilds)
+            task = self._inflight.get(cache_key)
+            if task is None:
+                task = asyncio.create_task(
+                    self._fetch_guilds(access_token=access_token)
+                )
+                self._inflight[cache_key] = task
+
+        try:
+            guilds = await asyncio.shield(task)
+        finally:
+            if task.done():
+                async with self._cache_lock:
+                    if self._inflight.get(cache_key) is task:
+                        self._inflight.pop(cache_key, None)
+                        if not task.cancelled() and task.exception() is None:
+                            self._cache[cache_key] = _GuildCacheEntry(
+                                guilds=tuple(task.result()),
+                                expires_at=(
+                                    self._monotonic() + self._cache_ttl_seconds
+                                ),
+                            )
+
+        return list(guilds)
+
+    async def _fetch_guilds(
+        self,
+        *,
+        access_token: str,
+    ) -> list[DiscordOAuthGuild]:
+        """Fetch Discord guilds after cache and single-flight resolution."""
+
         guilds: list[DiscordOAuthGuild] = []
         after: str | None = None
 
@@ -113,15 +182,15 @@ class DiscordIdentityClient:
             params: dict[str, str | int] = {"limit": DISCORD_GUILD_PAGE_SIZE}
             if after is not None:
                 params["after"] = after
-            response = await self._http_client.get(
-                f"{DISCORD_API_BASE_URL}/users/@me/guilds",
-                headers={"Authorization": f"Bearer {access_token}"},
+            response = await self._request_guild_page(
+                access_token=access_token,
                 params=params,
             )
             if not response.is_success:
                 raise DiscordApiError(
                     "Discord could not validate the authenticated user's guilds "
-                    f"(status {response.status_code})."
+                    f"(status {response.status_code}).",
+                    status_code=response.status_code,
                 )
 
             payload = response.json()
@@ -146,6 +215,51 @@ class DiscordIdentityClient:
                     "Discord returned invalid pagination for current-user guilds."
                 )
             after = page[-1].id
+
+    async def _request_guild_page(
+        self,
+        *,
+        access_token: str,
+        params: dict[str, str | int],
+    ) -> httpx.Response:
+        """Request one OAuth guild page and honor one bounded Discord retry."""
+
+        for attempt in range(2):
+            response = await self._http_client.get(
+                f"{DISCORD_API_BASE_URL}/users/@me/guilds",
+                headers={"Authorization": f"Bearer {access_token}"},
+                params=params,
+            )
+            if response.status_code != 429:
+                return response
+
+            retry_after = _retry_after_seconds(response)
+            if (
+                attempt == 0
+                and retry_after is not None
+                and retry_after <= MAX_OAUTH_RATE_LIMIT_RETRY_SECONDS
+            ):
+                await self._sleep(retry_after)
+                continue
+
+            retry_message = (
+                f" Retry after {retry_after:g} seconds."
+                if retry_after is not None
+                else ""
+            )
+            raise DiscordApiError(
+                "Discord rate limited authenticated guild validation (status 429)."
+                f"{retry_message}",
+                status_code=429,
+                retry_after_seconds=retry_after,
+            )
+
+        raise RuntimeError("Discord guild retry loop exited unexpectedly.")
+
+    def _prune_expired_cache(self, now: float) -> None:
+        expired = [key for key, entry in self._cache.items() if entry.expires_at <= now]
+        for key in expired:
+            self._cache.pop(key, None)
 
     async def get_guild(
         self,
@@ -174,6 +288,21 @@ class DiscordBotGuildVerifier:
         client = DiscordClient(bot_token=self._bot_token)
         try:
             await client.list_guild_channels(guild_id)
+        finally:
+            await client.aclose()
+
+    async def verify_member(self, *, guild_id: str, user_id: str) -> None:
+        """Confirm current membership through the installed GuildSpan bot."""
+
+        client = DiscordClient(bot_token=self._bot_token)
+        try:
+            await client.get_guild_member(guild_id=guild_id, user_id=user_id)
+        except DiscordApiError as error:
+            if error.status_code == 404:
+                raise DiscordPermissionError(
+                    f"The authenticated Discord user is not a member of guild {guild_id}."
+                ) from error
+            raise
         finally:
             await client.aclose()
 
@@ -254,6 +383,24 @@ class GuildAuthorizationService:
             )
 
         discord_user_id = _discord_user_id(token)
+        async with self._database.session() as session:
+            user = await UserRepository(session).get_by_discord_id(discord_user_id)
+            has_access = (
+                await GuildAccessRepository(session).has_access(
+                    user_id=user.id,
+                    discord_guild_id=guild_id,
+                )
+                if user is not None and user.is_active
+                else False
+            )
+
+        if has_access:
+            await self._bot_verifier.verify_member(
+                guild_id=guild_id,
+                user_id=discord_user_id,
+            )
+            return
+
         guild = await self._identity_client.get_guild(
             access_token=token.token,
             guild_id=guild_id,
@@ -264,17 +411,6 @@ class GuildAuthorizationService:
             )
 
         profile = _discord_profile(token, discord_user_id=discord_user_id)
-        async with self._database.session() as session:
-            user = await UserRepository(session).upsert(**profile)
-            user_id = user.id
-            has_access = await GuildAccessRepository(session).has_access(
-                user_id=user_id,
-                discord_guild_id=guild_id,
-            )
-
-        if has_access:
-            return
-
         if not guild.can_bootstrap_access:
             raise DiscordPermissionError(
                 "GuildSpan access has not been granted for this guild. A Discord "
@@ -300,6 +436,25 @@ class GuildAuthorizationService:
                 user_id=user.id,
                 guild_installation_id=installation.id,
             )
+
+
+def _retry_after_seconds(response: httpx.Response) -> float | None:
+    raw_value: object = response.headers.get("Retry-After")
+    if raw_value is None:
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict):
+            raw_value = cast(dict[str, object], payload).get("retry_after")
+
+    if not isinstance(raw_value, (str, int, float)):
+        return None
+    try:
+        value = float(raw_value)
+    except (TypeError, ValueError):
+        return None
+    return value if value >= 0 and math.isfinite(value) else None
 
 
 def create_authorization_service(

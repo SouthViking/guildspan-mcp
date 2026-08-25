@@ -236,7 +236,7 @@ provider contract and stores application-encrypted values. Do not use ORM
 
 - This repo uses a **Discord bot token**, not a user token.
 - Hosted HTTP uses standard MCP OAuth 2.1 with Discord `identify` and `guilds`; local `stdio` remains unauthenticated and database-optional.
-- Hosted authorization requires current Discord guild membership plus an active persisted grant. An owner or member with Manage Server may bootstrap the first grant only when the bot is installed and the guild is operator-allowlisted.
+- Hosted authorization requires current Discord guild membership plus an active persisted grant. Active grants use a targeted bot member lookup; the broader OAuth guild list is reserved for discovery and first-time bootstrap. An owner or member with Manage Server may bootstrap the first grant only when the bot is installed and the guild is operator-allowlisted.
 - If no guild allowlist is configured, the bot can send to any channel it can access.
 - The effective permissions are the intersection of:
   - Discord permissions granted to the bot

@@ -379,7 +379,16 @@ Hosted clients discover OAuth 2.1 metadata from the service and perform browser-
 - The GuildSpan bot is installed and can access the guild.
 - If no grant exists yet, the user owns the guild or has Discord's **Manage Server** permission.
 
-That first eligible request records the installation and user grant. Later requests still require current guild membership and the active persisted grant. This bootstrap can later be replaced or extended by a management platform without changing the MCP/OAuth contract. See [Hosted authentication](docs/hosted-auth.md).
+That first eligible request records the installation and user grant. Later
+requests still require current guild membership and the active persisted grant;
+GuildSpan verifies that membership with a targeted bot request instead of
+relisting every OAuth guild. The broader OAuth guild list is reserved for
+discovery and first-time bootstrap, cached briefly in-process, and coalesced
+when concurrent requests use the same user token. A short Discord rate limit is
+retried once according to `Retry-After`; longer limits are returned as an
+actionable error instead of blocking the MCP request indefinitely. This
+bootstrap can later be replaced or extended by a management platform without
+changing the MCP/OAuth contract. See [Hosted authentication](docs/hosted-auth.md).
 
 ## Persistence
 

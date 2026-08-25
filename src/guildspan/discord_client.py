@@ -410,7 +410,8 @@ class DiscordClient:
 
         message = self._extract_error_message(response)
         raise DiscordApiError(
-            f"Discord API request failed with status {response.status_code}: {message}"
+            f"Discord API request failed with status {response.status_code}: {message}",
+            status_code=response.status_code,
         )
 
     def _decode_object_list_response(

@@ -48,6 +48,13 @@ creating grants. It intersects the current Discord user's guilds with
 live bot access. Results are labeled `authorized` or `eligible_to_initialize`;
 all other guilds are omitted.
 
+OAuth guild discovery is intentionally separate from routine authorization.
+GuildSpan caches each successful guild list for 30 seconds and coalesces
+concurrent requests for the same access token. If Discord returns a `429`, the
+service honors `Retry-After` for one retry when the delay is at most five
+seconds. Longer or repeated limits are returned to the client with the retry
+delay instead of holding the request open.
+
 Compatible clients may use dynamic client registration or client ID metadata
 documents. A future GuildSpan web platform can manage grants and configuration
 without changing this MCP flow.
@@ -56,7 +63,9 @@ without changing this MCP flow.
 
 For every guild-scoped tool call, GuildSpan requires the guild in
 `DISCORD_ALLOWED_GUILDS` and confirms the authenticated user still belongs to
-it. If an active persisted grant already exists, the request proceeds.
+it. If an active persisted grant already exists, GuildSpan checks that specific
+user/guild membership through the installed service bot and the request
+proceeds. It does not relist the user's OAuth guilds on every tool call.
 
 When no grant exists, GuildSpan allows a one-time bootstrap only when the user
 owns the guild or has Discord's **Manage Server** permission and the service bot

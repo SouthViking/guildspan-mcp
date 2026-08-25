@@ -51,9 +51,9 @@ def test_plugin_uses_production_oauth_mcp_endpoint() -> None:
 
 
 def test_plugin_skill_has_no_scaffold_placeholders() -> None:
-    skill = (
-        PLUGIN_ROOT / "skills" / "guildspan-discord" / "SKILL.md"
-    ).read_text(encoding="utf-8")
+    skill = (PLUGIN_ROOT / "skills" / "guildspan-discord" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
 
     assert "[TODO:" not in skill
     assert "Discord bot tokens" in skill

@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from guildspan.config import Settings
-from guildspan.errors import GuildSpanError
+from guildspan.errors import DiscordPermissionError, GuildSpanError
 from guildspan.tools._common import (
     DiscordClientProtocol,
-    assert_channel_is_allowed,
     assert_guild_is_allowed,
     build_client,
     optional_id,
@@ -57,15 +56,29 @@ async def _discord_health_check(
 
     managed_client = client is None
     discord_client = client or build_client(bot_token=bot_token)
+    guild_authorization_results: dict[str, GuildSpanError | None] = {}
+
+    async def assert_guild_once(guild_id: str) -> None:
+        if guild_id in guild_authorization_results:
+            previous_error = guild_authorization_results[guild_id]
+            if previous_error is not None:
+                raise previous_error
+            return
+        try:
+            await assert_guild_is_allowed(
+                guild_id=guild_id,
+                settings=resolved_settings,
+            )
+        except GuildSpanError as error:
+            guild_authorization_results[guild_id] = error
+            raise
+        guild_authorization_results[guild_id] = None
 
     try:
         if normalized_guild_id is not None:
             guild_allowed = False
             try:
-                await assert_guild_is_allowed(
-                    guild_id=normalized_guild_id,
-                    settings=resolved_settings,
-                )
+                await assert_guild_once(normalized_guild_id)
                 guild_allowed = True
                 checks.append(
                     _ok_check("guild_policy", "Guild is allowed by local policy.")
@@ -91,12 +104,22 @@ async def _discord_health_check(
 
         if normalized_channel_id is not None:
             try:
-                await assert_channel_is_allowed(
-                    channel_id=normalized_channel_id,
-                    settings=resolved_settings,
-                    client=discord_client,
-                )
                 channel = await discord_client.get_channel(normalized_channel_id)
+                channel_guild_id = channel.guild_id
+                if channel_guild_id is None:
+                    raise DiscordPermissionError(
+                        f"Channel {normalized_channel_id} is not a Discord guild channel."
+                    )
+                if (
+                    normalized_guild_id is not None
+                    and channel_guild_id != normalized_guild_id
+                ):
+                    raise DiscordPermissionError(
+                        f"Channel {normalized_channel_id} belongs to guild "
+                        f"{channel_guild_id}, not requested guild "
+                        f"{normalized_guild_id}."
+                    )
+                await assert_guild_once(channel_guild_id)
                 checks.append(
                     {
                         "name": "channel_access",

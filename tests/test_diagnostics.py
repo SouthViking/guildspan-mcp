@@ -10,6 +10,7 @@ from guildspan.discord_client import (
     DiscordThread,
     DiscordUpload,
 )
+from guildspan.tools import diagnostics as diagnostics_module
 from guildspan.tools.diagnostics import _discord_health_check
 
 
@@ -21,8 +22,10 @@ def make_settings(**kwargs: object) -> Settings:
 class FakeDiscordClient:
     def __init__(self) -> None:
         self.closed = False
+        self.get_channel_calls: list[str] = []
 
     async def get_channel(self, channel_id: str) -> DiscordChannel:
+        self.get_channel_calls.append(channel_id)
         return DiscordChannel(
             id=channel_id,
             name="general",
@@ -144,6 +147,37 @@ async def test_discord_health_check_reports_ok() -> None:
         "guild_access",
         "channel_access",
     ]
+
+
+@pytest.mark.asyncio
+async def test_discord_health_check_authorizes_same_guild_only_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_client = FakeDiscordClient()
+    authorization_calls: list[str] = []
+
+    async def fake_assert_guild_is_allowed(
+        *, guild_id: str, settings: Settings
+    ) -> None:
+        authorization_calls.append(guild_id)
+
+    monkeypatch.setattr(
+        diagnostics_module,
+        "assert_guild_is_allowed",
+        fake_assert_guild_is_allowed,
+    )
+
+    result = await _discord_health_check(
+        guild_id="guild-1",
+        channel_id="channel-1",
+        include_channel_sample=False,
+        settings=make_settings(discord_bot_token="token"),
+        client=fake_client,
+    )
+
+    assert result["status"] == "ok"
+    assert authorization_calls == ["guild-1"]
+    assert fake_client.get_channel_calls == ["channel-1"]
 
 
 @pytest.mark.asyncio

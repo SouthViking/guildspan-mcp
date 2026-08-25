@@ -31,6 +31,14 @@ style sections and uses conventional commits for commit messages.
 - Access policy is now guild-scoped through `DISCORD_ALLOWED_GUILDS`; channel access is delegated to Discord role and channel permissions.
 - Unauthenticated HTTP can bind only to loopback; public HTTP startup requires explicit hosted-auth configuration and a non-empty guild allowlist.
 
+### Fixed
+
+- Hosted authorization now validates active grants with a targeted bot member
+  lookup instead of repeatedly listing every OAuth guild. Guild discovery uses
+  a short-lived single-flight cache, honors one bounded `Retry-After`, and the
+  diagnostic tool reuses same-guild authorization results to avoid duplicate
+  Discord requests.
+
 ## [0.1.0] - 2026-07-21
 
 ### Added

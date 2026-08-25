@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from guildspan.discord_client import DiscordClient, DiscordUpload
-from guildspan.errors import DiscordPermissionError
+from guildspan.errors import DiscordApiError, DiscordPermissionError
 
 
 @pytest.mark.asyncio
@@ -71,6 +71,26 @@ async def test_discord_client_calls_read_only_people_endpoints() -> None:
         "https://discord.example/api/v10/guilds/guild-1/members/search?query=South&limit=25",
         "https://discord.example/api/v10/guilds/guild-1/roles",
     ]
+
+
+@pytest.mark.asyncio
+async def test_discord_client_preserves_api_status_code() -> None:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status_code=404, json={"message": "Unknown Member"})
+
+    client = DiscordClient(
+        bot_token="token",
+        base_url="https://discord.example/api/v10",
+        transport=httpx.MockTransport(handler),
+    )
+
+    try:
+        with pytest.raises(DiscordApiError) as error_info:
+            await client.get_guild_member(guild_id="guild-1", user_id="user-1")
+    finally:
+        await client.aclose()
+
+    assert error_info.value.status_code == 404
 
 
 @pytest.mark.asyncio

@@ -53,6 +53,21 @@ Grant only the permission named by the error. Common mappings are:
 
 Channel overrides can deny permissions even when the bot role grants them at server level.
 
+## Discord returns 429 Too Many Requests
+
+GuildSpan coalesces concurrent hosted guild-discovery requests and caches a
+successful result briefly. It also honors Discord's `Retry-After` value for one
+automatic retry when the requested delay is at most five seconds.
+
+- Wait for the reported retry interval before manually repeating a failed
+  `discord_list_guilds` call.
+- Do not repeatedly retry a mutating tool such as `discord_send_message` unless
+  its result confirms that no Discord action occurred.
+- Routine calls against an active persisted grant validate one membership with
+  the service bot and do not consume the OAuth guild-list route.
+- If rate limits remain frequent, capture the failing tool, HTTP status, and
+  sanitized retry delay. Never include Discord OAuth or bot tokens.
+
 ## Message content or media metadata is empty
 
 Enable **Message Content Intent** on the application's Bot page in the Discord Developer Portal. Discord can otherwise return empty `content`, `embeds`, `attachments`, and `components`, and omit poll data.
